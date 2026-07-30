@@ -1,0 +1,60 @@
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 44 100% 58%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 39%;
+    --muted-foreground: 0 0% 62%;
+
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 1 78% 56%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 85%;
+    --input: 0 0% 85%;
+    --ring: 47 91% 61%;
+
+    --radius: 0.75rem;
+
+    --pengio-green: 119 55% 54%;
+    --pengio-green-hover: 116 69% 47%;
+    --pengio-blue: 201 80% 50%;
+    --pengio-orange: 32 100% 50%;
+    --pengio-purple: 270 74% 53%;
+
+    --light-gray: 0 0% 96%;
+    --medium-gray: 0 0% 62%;
+    --dark-gray: 0 0% 20%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Satoshi', sans-serif;
+  }
+}
