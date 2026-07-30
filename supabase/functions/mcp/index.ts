@@ -3,10 +3,10 @@
 // supabase function: mcp
 // Bundled from src/lib/mcp/index.ts by @lovable.dev/mcp-js.
 // src/lib/mcp/index.ts
-import { defineMcp } from "npm:@lovable.dev/mcp-js@0.25.0";
+import { defineMcp } from "npm:@lovable.dev/mcp-js@0.25.1";
 
 // src/lib/mcp/tools/list-loan-requests.ts
-import { defineTool } from "npm:@lovable.dev/mcp-js@0.25.0";
+import { defineTool } from "npm:@lovable.dev/mcp-js@0.25.1";
 var mockRequests = [
   { id: 1, senderName: "Kaia Lunde", senderAvatar: "KL", amount: 2e3, repaymentPeriod: "28 March 2025", interestPercent: 5, message: "Hope this helps \u{1F60A}", status: "Pending", receivedAt: "Today" },
   { id: 2, senderName: "Erik Johansen", senderAvatar: "EJ", amount: 4e3, repaymentPeriod: "15 April 2025", interestPercent: 3, message: "Need it for rent this month, will pay back ASAP.", status: "Pending", receivedAt: "Yesterday" },
@@ -25,7 +25,7 @@ var list_loan_requests_default = defineTool({
 });
 
 // src/lib/mcp/tools/list-loan-offers.ts
-import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.25.0";
+import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.25.1";
 var mockLoanOffers = [
   { id: 101, senderName: "Jenny", senderAvatar: "JN", amount: 1e3, repaymentPeriod: "28 March 2025", interestPercent: 5, message: "Hope this helps \u{1F60A}", condition: "", status: "Pending", receivedAt: "Today" }
 ];
@@ -42,7 +42,7 @@ var list_loan_offers_default = defineTool2({
 });
 
 // src/lib/mcp/tools/list-contacts.ts
-import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.25.0";
+import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.25.1";
 var contacts = [
   { id: 1, name: "Anna Kristoffersen", avatar: "AK", phone: "+47 912 34 567", email: "anna@test.com" },
   { id: 2, name: "Erik Johansen", avatar: "EJ", phone: "+47 987 65 432", email: "erik@test.com" },
@@ -63,7 +63,7 @@ var list_contacts_default = defineTool3({
 });
 
 // src/lib/mcp/tools/get-loan-request.ts
-import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.25.0";
+import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.25.1";
 import { z } from "npm:zod@^4.4.3";
 var mockRequests2 = [
   { id: 1, senderName: "Kaia Lunde", senderAvatar: "KL", amount: 2e3, repaymentPeriod: "28 March 2025", interestPercent: 5, message: "Hope this helps \u{1F60A}", status: "Pending", receivedAt: "Today" },
@@ -96,5 +96,5 @@ var mcp_default = defineMcp({
 });
 
 // lovable-mcp-supabase-entry.ts
-import { createSupabaseHandler } from "npm:@lovable.dev/mcp-js@0.25.0/stacks/supabase";
+import { createSupabaseHandler } from "npm:@lovable.dev/mcp-js@0.25.1/stacks/supabase";
 Deno.serve(createSupabaseHandler(mcp_default, { functionName: "mcp" }));
