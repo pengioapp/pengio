@@ -24,10 +24,26 @@ const Profile = () => {
     { icon: Trash2, label: t("profile.deleteAccount"), destructive: true, action: "delete" },
   ];
 
-  const handleSignOut = () => { setShowLogout(false); authLogout(); navigate("/login"); };
-  const handleDeleteAccount = () => {
+  // Awaited so the stored session is cleared before navigating away; otherwise
+  // RequireAuth can still see a live session and bounce straight back in.
+  const handleSignOut = async () => {
+    setShowLogout(false);
+    await authLogout();
+    navigate("/login", { replace: true });
+  };
+
+  // Signs out, but does not delete anything. Erasing an account has to remove
+  // the auth user, which needs privileges the browser does not have -- and it
+  // has to reckon with loans the person is party to, since a counterparty's
+  // record of a debt should not vanish because the other side left.
+  // TODO: implement as a server-side function with an explicit data-retention
+  // rule before offering this to real users.
+  const handleDeleteAccount = async () => {
     if (deleteConfirmText !== t("profile.deleteWord")) return;
-    setShowDeleteAccount(false); setDeleteConfirmText(""); authLogout(); navigate("/login");
+    setShowDeleteAccount(false);
+    setDeleteConfirmText("");
+    await authLogout();
+    navigate("/login", { replace: true });
   };
 
   const languageLabel = language === "en" ? "English" : "Norsk (Bokmål)";

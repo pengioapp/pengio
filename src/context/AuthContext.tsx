@@ -1,4 +1,13 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  type ReactNode,
+} from "react";
+import type { Session, User } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface ProfileData {
   fullName: string;
@@ -15,25 +24,25 @@ interface AuthUser {
   email: string;
 }
 
-interface AuthContextType {
-  user: AuthUser | null;
-  login: (email: string) => boolean;
-  signup: (name: string, email: string) => void;
-  logout: () => void;
-  firstName: string;
-  profile: ProfileData;
-  updateProfile: (data: ProfileData) => void;
+export interface AuthResult {
+  error: string | null;
 }
 
-const PREDEFINED_USERS: Record<string, string> = {
-  "anna@test.com": "Anna Kristoffersen",
-  "erik@test.com": "Erik Johansen",
-};
+interface AuthContextType {
+  user: AuthUser | null;
+  session: Session | null;
+  /** True until the initial session lookup finishes. Guards against redirecting
+   *  a signed-in user to /login during the first render. */
+  loading: boolean;
+  signIn: (email: string, password: string) => Promise<AuthResult>;
+  signUp: (name: string, email: string, password: string) => Promise<AuthResult>;
+  logout: () => Promise<void>;
+  firstName: string;
+  profile: ProfileData;
+  updateProfile: (data: ProfileData) => Promise<AuthResult>;
+}
 
-const STORAGE_KEY = "pengio-auth-user";
-const PROFILE_KEY = "pengio-profile";
-
-const defaultProfile: ProfileData = {
+const emptyProfile: ProfileData = {
   fullName: "",
   email: "",
   phone: "",
@@ -45,59 +54,160 @@ const defaultProfile: ProfileData = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Age is derived rather than stored: a stored age is wrong from the next
+// birthday onwards, and nothing would ever correct it.
+const ageFromBirthDate = (birthDate: string | null): string => {
+  if (!birthDate) return "";
+  const born = new Date(birthDate);
+  if (Number.isNaN(born.getTime())) return "";
+  const now = new Date();
+  let age = now.getFullYear() - born.getFullYear();
+  const monthDiff = now.getMonth() - born.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < born.getDate())) age -= 1;
+  return age >= 0 ? String(age) : "";
+};
+
+// Supabase surfaces raw auth errors that are fine for logs but poor for users.
+const humanise = (message: string): string => {
+  const m = message.toLowerCase();
+  if (m.includes("invalid login credentials")) return "Wrong email or password.";
+  if (m.includes("email not confirmed")) return "Check your inbox to confirm your email first.";
+  if (m.includes("already registered")) return "That email already has an account.";
+  if (m.includes("rate limit")) return "Too many attempts. Wait a minute and try again.";
+  if (m.includes("password")) return message;
+  return message;
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<AuthUser | null>(() => {
-    try {
-      const saved = sessionStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<ProfileData>(emptyProfile);
+  const [loading, setLoading] = useState(true);
+
+  const loadProfile = useCallback(async (authUser: User) => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("full_name, email, phone, residence, birth_date, profession, about_me")
+      .eq("id", authUser.id)
+      .maybeSingle();
+
+    if (error || !data) {
+      // The signup trigger creates this row, so a miss means the row is still
+      // in flight or was removed. Fall back to what the token already tells us
+      // rather than rendering a blank profile.
+      setProfile({
+        ...emptyProfile,
+        fullName: (authUser.user_metadata?.full_name as string) ?? "",
+        email: authUser.email ?? "",
+      });
+      return;
     }
-  });
 
-  const [profile, setProfile] = useState<ProfileData>(() => {
-    try {
-      const saved = sessionStorage.getItem(PROFILE_KEY);
-      return saved ? JSON.parse(saved) : defaultProfile;
-    } catch {
-      return defaultProfile;
-    }
-  });
-
-  const login = useCallback((email: string): boolean => {
-    const normalizedEmail = email.trim().toLowerCase();
-    const name = PREDEFINED_USERS[normalizedEmail];
-    if (!name) return false;
-    const u = { name, email: normalizedEmail };
-    setUser(u);
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(u));
-    return true;
+    setProfile({
+      fullName: data.full_name ?? "",
+      email: data.email ?? "",
+      phone: data.phone ?? "",
+      residence: data.residence ?? "",
+      age: ageFromBirthDate(data.birth_date),
+      profession: data.profession ?? "",
+      aboutMe: data.about_me ?? "",
+    });
   }, []);
 
-  const signup = useCallback((name: string, email: string) => {
-    const u = { name: name.trim(), email: email.trim().toLowerCase() };
-    setUser(u);
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(u));
+  useEffect(() => {
+    let active = true;
+
+    // onAuthStateChange fires immediately with the restored session, and again
+    // on every sign-in, sign-out, and token refresh. Registering it before the
+    // getSession call below means a session restored from storage is never
+    // missed in the gap between the two.
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, next) => {
+      if (!active) return;
+      setSession(next);
+      if (next?.user) {
+        void loadProfile(next.user);
+      } else {
+        setProfile(emptyProfile);
+      }
+      setLoading(false);
+    });
+
+    void supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      setSession(data.session);
+      if (data.session?.user) void loadProfile(data.session.user);
+      setLoading(false);
+    });
+
+    return () => {
+      active = false;
+      subscription.subscription.unsubscribe();
+    };
+  }, [loadProfile]);
+
+  const signIn = useCallback(async (email: string, password: string): Promise<AuthResult> => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+    return { error: error ? humanise(error.message) : null };
   }, []);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    sessionStorage.removeItem(STORAGE_KEY);
+  const signUp = useCallback(
+    async (name: string, email: string, password: string): Promise<AuthResult> => {
+      const { error } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+        // Read by handle_new_user() to populate profiles.full_name, so the
+        // profile is never created nameless.
+        options: { data: { full_name: name.trim() } },
+      });
+      return { error: error ? humanise(error.message) : null };
+    },
+    []
+  );
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
   }, []);
 
-  const updateProfile = useCallback((data: ProfileData) => {
-    setProfile(data);
-    sessionStorage.setItem(PROFILE_KEY, JSON.stringify(data));
-    // Also update user name/email to keep in sync
-    const u = { name: data.fullName, email: data.email };
-    setUser(u);
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(u));
-  }, []);
+  const updateProfile = useCallback(
+    async (data: ProfileData): Promise<AuthResult> => {
+      if (!session?.user) return { error: "You are not signed in." };
 
-  const firstName = user ? user.name.split(" ")[0] : "";
+      // age is intentionally not written back. It is derived from birth_date,
+      // and turning a whole-number age into a date would invent a birthday.
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: data.fullName.trim(),
+          phone: data.phone || null,
+          residence: data.residence || null,
+          profession: data.profession || null,
+          about_me: data.aboutMe || null,
+        })
+        .eq("id", session.user.id);
+
+      if (error) return { error: error.message };
+
+      setProfile((prev) => ({ ...data, age: prev.age, email: prev.email }));
+      return { error: null };
+    },
+    [session]
+  );
+
+  const user: AuthUser | null = session?.user
+    ? {
+        name: profile.fullName || (session.user.user_metadata?.full_name as string) || "",
+        email: session.user.email ?? "",
+      }
+    : null;
+
+  const firstName = user?.name ? user.name.split(" ")[0] : "";
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, firstName, profile, updateProfile }}>
+    <AuthContext.Provider
+      value={{ user, session, loading, signIn, signUp, logout, firstName, profile, updateProfile }}
+    >
       {children}
     </AuthContext.Provider>
   );

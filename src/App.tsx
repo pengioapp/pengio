@@ -30,6 +30,7 @@ import { LanguageProvider } from "./context/LanguageContext";
 import { AuthProvider } from "./context/AuthContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import Notifications from "./pages/Notifications";
+import RequireAuth from "./components/RequireAuth";
 
 const queryClient = new QueryClient();
 
@@ -47,26 +48,26 @@ const App = () => (
               <Route path="/" element={<Splash />} />
               <Route path="/login" element={<Login />} />
               <Route path="/create-account" element={<CreateAccount />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/home" element={<HomePage />} />
-              <Route path="/borrow" element={<BorrowMoney />} />
-              <Route path="/lend" element={<LendMoney />} />
-              <Route path="/loans" element={<Dashboard />} />
-              <Route path="/inbox" element={<Inbox />} />
-              <Route path="/inbox/:id" element={<RequestDetail />} />
-              <Route path="/loan-request/:id" element={<LoanRequestPage />} />
-              <Route path="/overview" element={<Overview />} />
-              <Route path="/loan-summary" element={<LoanSummary />} />
-              <Route path="/loan-details" element={<LoanDetails />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/edit-personal-info" element={<EditPersonalInfo />} />
-              <Route path="/manage-members" element={<ManageMembers />} />
-              <Route path="/add-member" element={<AddMember />} />
-              <Route path="/login-security" element={<LoginSecurity />} />
-              <Route path="/alerts-setting" element={<AlertsSetting />} />
-              <Route path="/upcoming-payments" element={<UpcomingPayments />} />
-              <Route path="/all-transactions" element={<AllTransactions />} />
-              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+              <Route path="/home" element={<RequireAuth><HomePage /></RequireAuth>} />
+              <Route path="/borrow" element={<RequireAuth><BorrowMoney /></RequireAuth>} />
+              <Route path="/lend" element={<RequireAuth><LendMoney /></RequireAuth>} />
+              <Route path="/loans" element={<RequireAuth><Dashboard /></RequireAuth>} />
+              <Route path="/inbox" element={<RequireAuth><Inbox /></RequireAuth>} />
+              <Route path="/inbox/:id" element={<RequireAuth><RequestDetail /></RequireAuth>} />
+              <Route path="/loan-request/:id" element={<RequireAuth><LoanRequestPage /></RequireAuth>} />
+              <Route path="/overview" element={<RequireAuth><Overview /></RequireAuth>} />
+              <Route path="/loan-summary" element={<RequireAuth><LoanSummary /></RequireAuth>} />
+              <Route path="/loan-details" element={<RequireAuth><LoanDetails /></RequireAuth>} />
+              <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+              <Route path="/edit-personal-info" element={<RequireAuth><EditPersonalInfo /></RequireAuth>} />
+              <Route path="/manage-members" element={<RequireAuth><ManageMembers /></RequireAuth>} />
+              <Route path="/add-member" element={<RequireAuth><AddMember /></RequireAuth>} />
+              <Route path="/login-security" element={<RequireAuth><LoginSecurity /></RequireAuth>} />
+              <Route path="/alerts-setting" element={<RequireAuth><AlertsSetting /></RequireAuth>} />
+              <Route path="/upcoming-payments" element={<RequireAuth><UpcomingPayments /></RequireAuth>} />
+              <Route path="/all-transactions" element={<RequireAuth><AllTransactions /></RequireAuth>} />
+              <Route path="/notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </LoanProvider>

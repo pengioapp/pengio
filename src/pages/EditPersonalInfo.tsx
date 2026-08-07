@@ -34,7 +34,7 @@ const EditPersonalInfo = () => {
   const [profession, setProfession] = useState(profile.profession);
   const [aboutMe, setAboutMe] = useState(profile.aboutMe);
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!fullName.trim() || !email.trim()) {
       toast({
         title: t("editInfo.errorTitle"),
@@ -44,7 +44,10 @@ const EditPersonalInfo = () => {
       return;
     }
 
-    updateProfile({
+    // The save now hits the database, so it can fail. Awaiting the result before
+    // reporting success avoids telling someone their details were stored when
+    // the write was actually rejected.
+    const { error } = await updateProfile({
       fullName: fullName.trim(),
       email: email.trim(),
       phone: phone.trim(),
@@ -53,6 +56,15 @@ const EditPersonalInfo = () => {
       profession: profession.trim(),
       aboutMe: aboutMe.trim(),
     });
+
+    if (error) {
+      toast({
+        title: t("editInfo.errorTitle"),
+        description: error,
+        variant: "destructive",
+      });
+      return;
+    }
 
     toast({
       title: t("editInfo.successTitle"),

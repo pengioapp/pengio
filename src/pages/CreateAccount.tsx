@@ -4,23 +4,64 @@ import { Mail, Lock, CheckSquare, Square, User } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 
+// Supabase's own minimum is 6, but these are accounts holding people's debt
+// records. Eight is still modest; it just rules out the worst.
+const MIN_PASSWORD_LENGTH = 8;
+
 const CreateAccount = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { signup } = useAuth();
+  const { signUp } = useAuth();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) return;
-    if (!termsAccepted) return;
-    if (!fullName.trim()) return;
-    signup(fullName, email);
-    navigate("/home");
+    if (submitting) return;
+
+    // Every branch reports why. Previously these returned silently, so a
+    // mismatched password looked identical to a broken button.
+    if (!fullName.trim()) {
+      setError("Enter your name.");
+      return;
+    }
+    if (!email.trim()) {
+      setError("Enter your email address.");
+      return;
+    }
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("The two passwords do not match.");
+      return;
+    }
+    if (!termsAccepted) {
+      setError("You need to accept the terms to continue.");
+      return;
+    }
+
+    setSubmitting(true);
+    setError("");
+
+    const { error: signUpError } = await signUp(fullName, email, password);
+
+    if (signUpError) {
+      setError(signUpError);
+      setSubmitting(false);
+      return;
+    }
+
+    // With email confirmation enabled, signUp returns no session, so landing on
+    // /home would immediately bounce back to /login. Send them to sign in, where
+    // the "confirm your email" message will explain what happened.
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -45,7 +86,7 @@ const CreateAccount = () => {
             <label className="text-body-small text-foreground mb-2 block">{t("createAccount.fullName")}</label>
             <div className="flex items-center gap-3 bg-secondary rounded-xl px-4 py-3">
               <User className="w-4 h-4 text-muted-foreground" />
-              <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t("createAccount.enterFullName")} className="flex-1 bg-transparent text-body-standard text-foreground placeholder:text-muted-foreground outline-none" />
+              <input type="text" autoComplete="name" value={fullName} onChange={(e) => { setFullName(e.target.value); setError(""); }} placeholder={t("createAccount.enterFullName")} className="flex-1 bg-transparent text-body-standard text-foreground placeholder:text-muted-foreground outline-none" />
             </div>
           </div>
 
@@ -53,7 +94,7 @@ const CreateAccount = () => {
             <label className="text-body-small text-foreground mb-2 block">{t("createAccount.email")}</label>
             <div className="flex items-center gap-3 bg-secondary rounded-xl px-4 py-3">
               <Mail className="w-4 h-4 text-muted-foreground" />
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("createAccount.enterEmail")} className="flex-1 bg-transparent text-body-standard text-foreground placeholder:text-muted-foreground outline-none" />
+              <input type="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} placeholder={t("createAccount.enterEmail")} className="flex-1 bg-transparent text-body-standard text-foreground placeholder:text-muted-foreground outline-none" />
             </div>
           </div>
 
@@ -61,7 +102,7 @@ const CreateAccount = () => {
             <label className="text-body-small text-foreground mb-2 block">{t("createAccount.password")}</label>
             <div className="flex items-center gap-3 bg-secondary rounded-xl px-4 py-3">
               <Lock className="w-4 h-4 text-muted-foreground" />
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("createAccount.enterPassword")} className="flex-1 bg-transparent text-body-standard text-foreground placeholder:text-muted-foreground outline-none" />
+              <input type="password" autoComplete="new-password" value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }} placeholder={t("createAccount.enterPassword")} className="flex-1 bg-transparent text-body-standard text-foreground placeholder:text-muted-foreground outline-none" />
             </div>
           </div>
 
@@ -69,7 +110,7 @@ const CreateAccount = () => {
             <label className="text-body-small text-foreground mb-2 block">{t("createAccount.confirmPassword")}</label>
             <div className="flex items-center gap-3 bg-secondary rounded-xl px-4 py-3">
               <Lock className="w-4 h-4 text-muted-foreground" />
-              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder={t("createAccount.reEnterPassword")} className="flex-1 bg-transparent text-body-standard text-foreground placeholder:text-muted-foreground outline-none" />
+              <input type="password" autoComplete="new-password" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setError(""); }} placeholder={t("createAccount.reEnterPassword")} className="flex-1 bg-transparent text-body-standard text-foreground placeholder:text-muted-foreground outline-none" />
             </div>
           </div>
 
@@ -78,9 +119,11 @@ const CreateAccount = () => {
             <span className="text-body-micro text-muted-foreground text-left">{t("createAccount.terms")}</span>
           </button>
 
+          {error && <p className="text-destructive text-body-small text-center">{error}</p>}
+
           <div className="mt-auto pt-4 flex flex-col gap-3">
-            <button type="submit" className="w-full py-4 rounded-full bg-primary text-primary-foreground text-title font-bold hover:brightness-95 transition-all">
-              {t("createAccount.create")}
+            <button type="submit" disabled={submitting} className="w-full py-4 rounded-full bg-primary text-primary-foreground text-title font-bold hover:brightness-95 transition-all disabled:opacity-60">
+              {submitting ? "…" : t("createAccount.create")}
             </button>
             <p className="text-body-micro text-muted-foreground text-center">{t("createAccount.or")}</p>
             <button type="button" className="w-full py-4 rounded-full border-2 border-primary text-primary text-title font-bold hover:bg-primary/10 transition-all">
