@@ -1,73 +1,77 @@
-# Welcome to your Lovable project
+# Pengio
 
-## Project info
+An app for lending and borrowing money between people who trust each other.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Scope
 
-## How can I edit this code?
+**Pengio records agreements. It never holds or moves money.**
 
-There are several ways of editing your application.
+Settlement happens outside the app — Vipps, bank transfer, cash — and users
+record it here. This is a deliberate boundary, not a missing feature: moving
+money on someone's behalf is a licensed activity under Finanstilsynet in
+Norway, and would pull in KYC/AML obligations and PSD2 compliance.
 
-**Use Lovable**
+Nothing in this codebase should assume custody of funds.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+- Vite + React + TypeScript, Tailwind, shadcn/ui
+- Supabase for database and authentication
+- Postgres row level security for access control
 
-**Use your preferred IDE**
+## Running locally
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Requires Node 20 or newer.
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm install
+cp .env.example .env   # fill in from Supabase: Project Settings -> API keys
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Tests
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```sh
+npm test          # unit tests
+npm run test:rls  # access-control tests against a throwaway Postgres
+```
 
-**Use GitHub Codespaces**
+`test:rls` downloads and runs a temporary Postgres, applies the migrations,
+and asserts that users cannot read or alter each other's data. **Run it after
+any change under `supabase/`.** These policies are the only thing separating
+one person's debts from another person's view of them.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Database
 
-## What technologies are used for this project?
+Migrations live in `supabase/migrations/` and apply in filename order.
+`supabase/deploy/full_schema.sql` is those files concatenated, for pasting
+into the Supabase SQL editor.
 
-This project is built with:
+Two modelling decisions worth knowing before changing anything:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+**Proposals are one table, not two.** A loan request and a loan offer describe
+the same event from opposite ends. `loan_proposals` carries a borrower, a
+lender, and whoever initiated it; request-versus-offer is derived, so it can
+never contradict the participants.
 
-## How can I deploy this project?
+**Payments are claims, not facts.** Money moves outside the app, so a payment
+row is somebody's assertion about the real world. A payment recorded by the
+borrower stays unconfirmed until the lender agrees, and unconfirmed payments
+never reduce a balance. A payment recorded by the lender self-confirms — it is
+a statement against their own interest, so there is nothing to gain by lying.
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Editing in Lovable
 
-## Can I connect a custom domain to my Lovable project?
+This project began as a Lovable prototype and syncs with Lovable through
+GitHub in both directions: Lovable's edits are committed to the repo, and
+pushes here are reflected back into Lovable.
 
-Yes, you can!
+**Lovable's agent should not edit `supabase/`.** It regenerates files it
+believes it owns, and a rewritten RLS policy is a data leak rather than a
+visual regression. Keep Lovable to UI work. If something under `supabase/`
+does change, `npm run test:rls` is what catches it.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Deploying
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Via Lovable: Share → Publish. Custom domains are under Project → Settings →
+Domains.
