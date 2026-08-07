@@ -14,16 +14,273 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      contacts: {
+        Row: {
+          contact_user_id: string | null
+          created_at: string
+          display_name: string
+          email: string | null
+          id: string
+          owner_id: string
+          phone: string | null
+        }
+        Insert: {
+          contact_user_id?: string | null
+          created_at?: string
+          display_name: string
+          email?: string | null
+          id?: string
+          owner_id: string
+          phone?: string | null
+        }
+        Update: {
+          contact_user_id?: string | null
+          created_at?: string
+          display_name?: string
+          email?: string | null
+          id?: string
+          owner_id?: string
+          phone?: string | null
+        }
+        Relationships: []
+      }
+      loan_proposals: {
+        Row: {
+          amount: number
+          borrower_id: string
+          condition: string | null
+          created_at: string
+          currency: string
+          id: string
+          initiated_by: string
+          interest_percent: number
+          lender_id: string
+          message: string | null
+          rejection_reason: string | null
+          repayment_date: string
+          responded_at: string | null
+          status: Database["public"]["Enums"]["proposal_status"]
+        }
+        Insert: {
+          amount: number
+          borrower_id: string
+          condition?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          initiated_by: string
+          interest_percent?: number
+          lender_id: string
+          message?: string | null
+          rejection_reason?: string | null
+          repayment_date: string
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["proposal_status"]
+        }
+        Update: {
+          amount?: number
+          borrower_id?: string
+          condition?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          initiated_by?: string
+          interest_percent?: number
+          lender_id?: string
+          message?: string | null
+          rejection_reason?: string | null
+          repayment_date?: string
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["proposal_status"]
+        }
+        Relationships: []
+      }
+      loans: {
+        Row: {
+          agreed_at: string
+          borrower_id: string
+          closed_at: string | null
+          currency: string
+          id: string
+          interest_percent: number
+          lender_id: string
+          principal: number
+          proposal_id: string | null
+          repayment_date: string
+          status: Database["public"]["Enums"]["loan_status"]
+        }
+        Insert: {
+          agreed_at?: string
+          borrower_id: string
+          closed_at?: string | null
+          currency?: string
+          id?: string
+          interest_percent?: number
+          lender_id: string
+          principal: number
+          proposal_id?: string | null
+          repayment_date: string
+          status?: Database["public"]["Enums"]["loan_status"]
+        }
+        Update: {
+          agreed_at?: string
+          borrower_id?: string
+          closed_at?: string | null
+          currency?: string
+          id?: string
+          interest_percent?: number
+          lender_id?: string
+          principal?: number
+          proposal_id?: string | null
+          repayment_date?: string
+          status?: Database["public"]["Enums"]["loan_status"]
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          loan_id: string | null
+          proposal_id: string | null
+          read_at: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          loan_id?: string | null
+          proposal_id?: string | null
+          read_at?: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          loan_id?: string | null
+          proposal_id?: string | null
+          read_at?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          id: string
+          loan_id: string
+          note: string | null
+          paid_at: string
+          recorded_by: string
+        }
+        Insert: {
+          amount: number
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          id?: string
+          loan_id: string
+          note?: string | null
+          paid_at?: string
+          recorded_by: string
+        }
+        Update: {
+          amount?: number
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          id?: string
+          loan_id?: string
+          note?: string | null
+          paid_at?: string
+          recorded_by?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          about_me: string | null
+          birth_date: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          profession: string | null
+          residence: string | null
+          updated_at: string
+        }
+        Insert: {
+          about_me?: string | null
+          birth_date?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id: string
+          phone?: string | null
+          profession?: string | null
+          residence?: string | null
+          updated_at?: string
+        }
+        Update: {
+          about_me?: string | null
+          birth_date?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          profession?: string | null
+          residence?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      confirm_payment: {
+        Args: { payment: string }
+        Returns: undefined
+      }
+      loan_amount_repaid: {
+        Args: { loan: string }
+        Returns: number
+      }
+      respond_to_proposal: {
+        Args: { proposal: string; accept: boolean; reason?: string }
+        Returns: string
+      }
+      users_are_connected: {
+        Args: { a: string; b: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      loan_status: "active" | "repaid" | "cancelled"
+      notification_type:
+        | "proposal_received"
+        | "proposal_accepted"
+        | "proposal_rejected"
+        | "payment_recorded"
+        | "payment_confirmed"
+        | "loan_repaid"
+        | "repayment_due_soon"
+      proposal_status: "pending" | "accepted" | "rejected" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +407,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      loan_status: ["active", "repaid", "cancelled"],
+      notification_type: [
+        "proposal_received",
+        "proposal_accepted",
+        "proposal_rejected",
+        "payment_recorded",
+        "payment_confirmed",
+        "loan_repaid",
+        "repayment_due_soon",
+      ],
+      proposal_status: ["pending", "accepted", "rejected", "cancelled"],
+    },
   },
 } as const
