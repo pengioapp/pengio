@@ -60,18 +60,41 @@ borrower stays unconfirmed until the lender agrees, and unconfirmed payments
 never reduce a balance. A payment recorded by the lender self-confirms — it is
 a statement against their own interest, so there is nothing to gain by lying.
 
-## Editing in Lovable
+## Relationship to Lovable
 
-This project began as a Lovable prototype and syncs with Lovable through
-GitHub in both directions: Lovable's edits are committed to the repo, and
-pushes here are reflected back into Lovable.
+This repository is the source of truth. Lovable produced the original
+prototype — 23 designed screens — and remains useful as a visual reference,
+but it no longer edits this code.
 
-**Lovable's agent should not edit `supabase/`.** It regenerates files it
-believes it owns, and a rewritten RLS policy is a data leak rather than a
-visual regression. Keep Lovable to UI work. If something under `supabase/`
-does change, `npm run test:rls` is what catches it.
+The decision was forced by a limitation and then confirmed by judgement.
+Lovable's Git integration only creates a new repository; it cannot import an
+existing one, so a two-way sync with this repo was never available. Given
+that, connecting was not worth it: Lovable Cloud wants to own the backend and
+provides its own database and auth, which would compete with the Supabase
+project this app actually uses. Its agent also regenerates files it believes
+it owns, and a rewritten RLS policy is a data leak rather than a visual
+regression.
+
+Removed as part of that decision:
+
+- `lovable-tagger` — tagged components for Lovable's visual editor
+- `mcpPlugin` in `vite.config.ts` — regenerated `supabase/functions/mcp/`
+  on every build, producing spurious diffs in tracked files
+- `.lovable/` — Lovable's own scratch state
+
+### The MCP endpoint
+
+`src/lib/mcp/` is kept, but nothing builds or deploys it any more.
+
+It defined four read-only tools over the demo dataset, exposed as a **public,
+unauthenticated** endpoint (`"auth": {"type": "none"}`). That was harmless
+while it served hardcoded mock data. It would not be harmless pointed at the
+real tables: it would be an open door to who owes whom.
+
+If you revive it, give it authentication first, and make the tools respect the
+caller's identity rather than reading with elevated privileges.
 
 ## Deploying
 
-Via Lovable: Share → Publish. Custom domains are under Project → Settings →
-Domains.
+Not yet configured. The Lovable-hosted preview no longer reflects this
+codebase.
