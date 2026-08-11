@@ -33,13 +33,20 @@ npm run dev
 
 ```sh
 npm test          # unit tests
-npm run test:rls  # access-control tests against a throwaway Postgres
+npm run test:rls  # access control, against a throwaway local Postgres
+npm run test:e2e  # full flow, against the live Supabase project
 ```
 
-`test:rls` downloads and runs a temporary Postgres, applies the migrations,
-and asserts that users cannot read or alter each other's data. **Run it after
-any change under `supabase/`.** These policies are the only thing separating
-one person's debts from another person's view of them.
+`test:rls` runs a temporary Postgres, applies the migrations, and asserts that
+users cannot read or alter each other's data. **Run it after any change under
+`supabase/`.** These policies are the only thing separating one person's debts
+from another person's view of them.
+
+`test:e2e` drives the same flow through the deployed database using the client
+library the app uses — proving the policies are actually live, not just
+correct on paper. It creates throwaway accounts each run; delete them from
+Authentication → Users. Point it at a development project, never one with real
+users.
 
 ## Database
 

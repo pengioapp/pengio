@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:rls": "rm -rf /tmp/pengio-rls-test && node supabase/tests/rls.test.mjs"
+    "test:rls": "rm -rf /tmp/pengio-rls-test && node supabase/tests/rls.test.mjs",
+    "test:e2e": "node supabase/tests/e2e.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
