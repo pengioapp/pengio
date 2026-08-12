@@ -101,6 +101,27 @@ real tables: it would be an open door to who owes whom.
 If you revive it, give it authentication first, and make the tools respect the
 caller's identity rather than reading with elevated privileges.
 
+## Where the app stands
+
+Working end to end against the database: sign-up and sign-in, contacts,
+proposing a loan in either direction, accepting or declining, recording a
+repayment, confirming one, and automatic closure when a loan is fully repaid.
+
+No screen renders invented data. That mattered more than it sounds: the
+prototype's loan detail screen derived an outstanding balance as 24 % of the
+principal for every loan, and the summary screen reported a fixed 17 500 kr
+lent and 4.2 % interest regardless of what was owed.
+
+Not built yet:
+
+- Counter-offers. Terms cannot be edited at approval, because doing so and
+  calling it agreement binds the other party to something they never proposed.
+  Changing terms should be a new proposal the other side accepts.
+- Deleting an account. It has to decide what happens to a counterparty's
+  record of a shared loan, so it needs a retention rule before it is offered.
+- Reminders. `repayment_due_soon` exists in the notification enum but nothing
+  emits it; that needs a scheduled job.
+
 ## Deploying
 
 Not yet configured. The Lovable-hosted preview no longer reflects this
