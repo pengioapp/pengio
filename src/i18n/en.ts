@@ -11,9 +11,10 @@ const en = {
   "home.activity.borrowed": "You borrowed {amount} kr from {name}",
   "home.activity.lent": "You lent {amount} kr to {name}",
   "home.activity.repaid": "{name} repaid {amount} kr",
-  "home.activity.yesterday": "Yesterday",
-  "home.activity.daysAgo": "{count} days ago",
-  "home.activity.lastWeek": "Last week",
+  "home.noActivity": "Nothing here yet. Lend or borrow to get started.",
+  "home.activity.pendingRequest": "You asked {name} for {amount} kr",
+  "home.activity.pendingOffer": "You offered {name} {amount} kr",
+  "home.activity.awaitingYou": "{name} is waiting for your answer",
 
   // Login
   "login.title": "Login",
@@ -301,6 +302,12 @@ const en = {
   "upcomingPayments.title": "Upcoming payment dates",
   "upcomingPayments.thisWeek": "This week",
   "upcomingPayments.nextWeek": "Next week",
+  "upcomingPayments.later": "Later",
+  "upcomingPayments.overdue": "Overdue",
+  "upcomingPayments.none": "No repayments due.",
+  "upcomingPayments.daysLeft": "{count} days left",
+  "upcomingPayments.youOwe": "You owe",
+  "upcomingPayments.owesYou": "Owes you",
   "upcomingPayments.payment": "Payment",
   "upcomingPayments.amount": "Amount",
 

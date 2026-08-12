@@ -11,9 +11,10 @@ const no = {
   "home.activity.borrowed": "Du lånte {amount} kr fra {name}",
   "home.activity.lent": "Du lånte ut {amount} kr til {name}",
   "home.activity.repaid": "{name} betalte tilbake {amount} kr",
-  "home.activity.yesterday": "I går",
-  "home.activity.daysAgo": "{count} dager siden",
-  "home.activity.lastWeek": "Forrige uke",
+  "home.noActivity": "Ingenting her enn\u00e5. L\u00e5n ut eller l\u00e5n for \u00e5 komme i gang.",
+  "home.activity.pendingRequest": "Du spurte {name} om {amount} kr",
+  "home.activity.pendingOffer": "Du tilb\u00f8d {name} {amount} kr",
+  "home.activity.awaitingYou": "{name} venter p\u00e5 svar fra deg",
 
   // Login
   "login.title": "Logg inn",
@@ -301,6 +302,12 @@ const no = {
   "upcomingPayments.title": "Kommende betalingsdatoer",
   "upcomingPayments.thisWeek": "Denne uken",
   "upcomingPayments.nextWeek": "Neste uke",
+  "upcomingPayments.later": "Senere",
+  "upcomingPayments.overdue": "Forfalt",
+  "upcomingPayments.none": "Ingen forfall.",
+  "upcomingPayments.daysLeft": "{count} dager igjen",
+  "upcomingPayments.youOwe": "Du skylder",
+  "upcomingPayments.owesYou": "Skylder deg",
   "upcomingPayments.payment": "Betaling",
   "upcomingPayments.amount": "Beløp",
 

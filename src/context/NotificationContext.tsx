@@ -1,19 +1,46 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
+import type { Database } from "@/integrations/supabase/types";
+
+type DbNotificationType = Database["public"]["Enums"]["notification_type"];
+
+/** The icon vocabulary the UI renders, deliberately smaller than the db enum. */
+export type NotificationKind =
+  | "request"
+  | "approved"
+  | "rejected"
+  | "repayment"
+  | "reminder"
+  | "overdue";
 
 export interface Notification {
-  id: number;
+  id: string;
   title: string;
   message: string;
   timestamp: string;
   read: boolean;
-  type: "request" | "approved" | "rejected" | "repayment" | "reminder" | "overdue" | "date-change";
+  type: NotificationKind;
 }
+
+const kindOf = (type: DbNotificationType): NotificationKind => {
+  switch (type) {
+    case "proposal_received": return "request";
+    case "proposal_accepted": return "approved";
+    case "proposal_rejected": return "rejected";
+    case "payment_recorded":
+    case "payment_confirmed":
+    case "loan_repaid": return "repayment";
+    case "repayment_due_soon": return "reminder";
+    default: return "reminder";
+  }
+};
 
 interface NotificationContextType {
   notifications: Notification[];
   unreadCount: number;
-  addNotification: (n: Omit<Notification, "id" | "read">) => void;
-  markAsRead: (id: number) => void;
+  markAsRead: (id: string) => void;
   markAllAsRead: () => void;
 }
 
@@ -25,34 +52,66 @@ export const useNotifications = () => {
   return ctx;
 };
 
-const initialNotifications: Notification[] = [
-  { id: 1, title: "Loan request received", message: "Erik Johansen wants to borrow 5 000 kr", timestamp: "2 hours ago", read: false, type: "request" },
-  { id: 2, title: "Repayment received", message: "Anna Kristoffersen repaid 2 000 kr", timestamp: "Yesterday", read: false, type: "repayment" },
-  { id: 3, title: "Upcoming payment", message: "Payment of 1 000 kr due in 3 days", timestamp: "Yesterday", read: true, type: "reminder" },
-  { id: 4, title: "Request approved", message: "Your loan request of 5 000 kr was approved", timestamp: "3 days ago", read: true, type: "approved" },
-  { id: 5, title: "Overdue payment", message: "Payment of 500 kr is overdue", timestamp: "Last week", read: true, type: "overdue" },
-  { id: 6, title: "Repayment date changed", message: "Erik updated repayment date to 15 May 2025", timestamp: "Last week", read: true, type: "date-change" },
-];
+const notificationsKey = ["notifications"] as const;
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
-  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const { session } = useAuth();
+  const queryClient = useQueryClient();
 
+  // Notifications are written by database triggers when proposals and payments
+  // happen, so the client only reads them and marks them read. There is
+  // deliberately no addNotification: a client-created notification could claim
+  // anything, which is why RLS grants no insert policy on this table.
+  const { data } = useQuery({
+    queryKey: notificationsKey,
+    enabled: !!session,
+    queryFn: async (): Promise<Notification[]> => {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("id, type, title, body, read_at, created_at")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) throw new Error(error.message);
+
+      return (data ?? []).map((row) => ({
+        id: row.id,
+        title: row.title,
+        message: row.body ?? "",
+        timestamp: row.created_at,
+        read: row.read_at !== null,
+        type: kindOf(row.type),
+      }));
+    },
+  });
+
+  const notifications = data ?? [];
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const addNotification = (n: Omit<Notification, "id" | "read">) => {
-    setNotifications((prev) => [{ ...n, id: Date.now(), read: false }, ...prev]);
-  };
-
-  const markAsRead = (id: number) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-  };
-
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  };
+  const markRead = useMutation({
+    mutationFn: async (ids: string[]) => {
+      if (ids.length === 0) return;
+      const { error } = await supabase
+        .from("notifications")
+        .update({ read_at: new Date().toISOString() })
+        .in("id", ids);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: notificationsKey });
+    },
+  });
 
   return (
-    <NotificationContext.Provider value={{ notifications, unreadCount, addNotification, markAsRead, markAllAsRead }}>
+    <NotificationContext.Provider
+      value={{
+        notifications,
+        unreadCount,
+        markAsRead: (id) => markRead.mutate([id]),
+        markAllAsRead: () =>
+          markRead.mutate(notifications.filter((n) => !n.read).map((n) => n.id)),
+      }}
+    >
       {children}
     </NotificationContext.Provider>
   );

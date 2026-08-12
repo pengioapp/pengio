@@ -1,43 +1,85 @@
 import { useNavigate } from "react-router-dom";
-import { Bell, ArrowDownLeft, ArrowUpRight, Coins } from "lucide-react";
+import { Bell, ArrowDownLeft, ArrowUpRight, Coins, Clock } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import { useTranslation } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { useNotifications } from "@/context/NotificationContext";
+import { useLoans } from "@/hooks/useLoans";
+import { useProposals } from "@/hooks/useProposals";
+import { formatAmount } from "@/lib/loans";
+import { formatDateString } from "@/lib/dateLocale";
+
+interface ActivityItem {
+  key: string;
+  text: string;
+  time: string;
+  icon: typeof ArrowUpRight;
+  loanId?: string;
+}
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { firstName } = useAuth();
   const { unreadCount } = useNotifications();
+  const { data: loans, isLoading: loansLoading } = useLoans();
+  const { data: proposals, isLoading: proposalsLoading } = useProposals();
 
   const greeting = firstName
     ? t("home.greeting", { name: firstName })
     : t("home.greetingFallback");
 
-  const mockActivity = [
-    { id: 1, type: "borrowed", name: "Anna Kristoffersen", avatar: "AK", amount: 1000, interest: 0, repaymentDate: "10 April 2025", text: t("home.activity.borrowed", { amount: "1000", name: "Anna" }), time: t("home.activity.yesterday"), icon: ArrowDownLeft },
-    { id: 2, type: "lent", name: "Erik Johansen", avatar: "EJ", amount: 5000, interest: 5, repaymentDate: "28 March 2025", text: t("home.activity.lent", { amount: "5000", name: "Erik" }), time: t("home.activity.daysAgo", { count: 3 }), icon: ArrowUpRight },
-    { id: 3, type: "repaid", name: "Erik Johansen", avatar: "EJ", amount: 2000, interest: 3, repaymentDate: "15 March 2025", text: t("home.activity.repaid", { name: "Erik", amount: "2000" }), time: t("home.activity.lastWeek"), icon: ArrowUpRight },
-    { id: 4, type: "borrowed", name: "Anna Kristoffersen", avatar: "AK", amount: 1000, interest: 2, repaymentDate: "20 April 2025", text: t("home.activity.borrowed", { amount: "1000", name: "Anna" }), time: t("home.activity.yesterday"), icon: ArrowDownLeft },
-  ];
+  // Both totals are what is still owed, not what was originally agreed. The
+  // prototype showed fixed figures here -- 12 500 kr and 4 000 kr -- on the
+  // first screen after signing in.
+  const lentOut = (loans ?? [])
+    .filter((l) => l.role === "lender")
+    .reduce((sum, l) => sum + l.outstanding, 0);
 
-  const handleActivityClick = (item: typeof mockActivity[0]) => {
-    const isLent = item.type === "lent" || item.type === "repaid";
-    navigate("/loan-details", {
-      state: {
-        loan: {
-          title: `${isLent ? t("loanDetails.loanTo") : t("loanDetails.loanFrom")} ${item.name}`,
-          avatar: item.avatar,
-          status: item.type === "repaid" ? t("status.paidOff") : t("status.dueSoon"),
-          outstandingBalance: `${item.amount.toLocaleString("nb-NO")} kr`,
-          nextPayment: item.repaymentDate,
-          interestRate: `${item.interest} %`,
-          amount: item.amount,
-        },
-      },
-    });
-  };
+  const borrowed = (loans ?? [])
+    .filter((l) => l.role === "borrower")
+    .reduce((sum, l) => sum + l.outstanding, 0);
+
+  const firstNameOf = (name: string) => name.split(" ")[0];
+
+  const loanActivity: ActivityItem[] = (loans ?? []).map((loan) => ({
+    key: `loan-${loan.id}`,
+    text:
+      loan.role === "lender"
+        ? t("home.activity.lent", {
+            amount: loan.principal.toLocaleString("nb-NO"),
+            name: firstNameOf(loan.counterparty.name),
+          })
+        : t("home.activity.borrowed", {
+            amount: loan.principal.toLocaleString("nb-NO"),
+            name: firstNameOf(loan.counterparty.name),
+          }),
+    time: formatDateString(loan.agreedAt, language),
+    icon: loan.role === "lender" ? ArrowUpRight : ArrowDownLeft,
+    loanId: loan.id,
+  }));
+
+  const pendingActivity: ActivityItem[] = (proposals ?? [])
+    .filter((p) => p.status === "pending")
+    .map((p) => ({
+      key: `proposal-${p.id}`,
+      text: p.incoming
+        ? t("home.activity.awaitingYou", { name: firstNameOf(p.counterparty.name) })
+        : p.kind === "request"
+          ? t("home.activity.pendingRequest", {
+              name: firstNameOf(p.counterparty.name),
+              amount: p.amount.toLocaleString("nb-NO"),
+            })
+          : t("home.activity.pendingOffer", {
+              name: firstNameOf(p.counterparty.name),
+              amount: p.amount.toLocaleString("nb-NO"),
+            }),
+      time: formatDateString(p.createdAt, language),
+      icon: Clock,
+    }));
+
+  const activity = [...pendingActivity, ...loanActivity].slice(0, 8);
+  const isLoading = loansLoading || proposalsLoading;
 
   return (
     <div className="flex flex-col min-h-screen bg-background pb-20">
@@ -61,14 +103,14 @@ const HomePage = () => {
                 <ArrowUpRight className="w-5 h-5 text-primary" />
               </div>
               <span className="text-body-small text-muted-foreground">{t("home.lentOut")}</span>
-              <span className="text-h4 font-bold text-foreground">12 500 kr</span>
+              <span className="text-h4 font-bold text-foreground">{formatAmount(lentOut)}</span>
             </div>
             <div className="flex flex-col items-start">
               <div className="w-10 h-10 rounded-full bg-background/20 flex items-center justify-center mb-2">
                 <ArrowDownLeft className="w-5 h-5 text-primary" />
               </div>
               <span className="text-body-small text-muted-foreground">{t("home.borrowed")}</span>
-              <span className="text-h4 font-bold text-foreground">4 000 kr</span>
+              <span className="text-h4 font-bold text-foreground">{formatAmount(borrowed)}</span>
             </div>
           </div>
 
@@ -97,9 +139,23 @@ const HomePage = () => {
           <button onClick={() => navigate("/all-transactions")} className="text-body-small text-muted-foreground">{t("home.viewAll")}</button>
         </div>
 
+        {isLoading && (
+          <div className="flex justify-center mt-6">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" role="status" aria-label="Loading" />
+          </div>
+        )}
+
+        {!isLoading && activity.length === 0 && (
+          <p className="text-body-small text-muted-foreground text-center mt-6">{t("home.noActivity")}</p>
+        )}
+
         <div className="flex flex-col gap-3">
-          {mockActivity.map((item) => (
-            <div key={item.id} onClick={() => handleActivityClick(item)} className="bg-secondary rounded-xl p-4 flex items-center gap-3 cursor-pointer active:opacity-80 transition-opacity">
+          {activity.map((item) => (
+            <div
+              key={item.key}
+              onClick={() => item.loanId && navigate("/loan-details", { state: { loanId: item.loanId } })}
+              className={`bg-secondary rounded-xl p-4 flex items-center gap-3 transition-opacity ${item.loanId ? "cursor-pointer active:opacity-80" : ""}`}
+            >
               <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                 <item.icon className="w-5 h-5 text-primary" />
               </div>

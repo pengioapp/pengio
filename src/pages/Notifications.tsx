@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Bell, CheckCheck, AlertTriangle, ArrowDownLeft, ArrowUpRight, CalendarClock, Clock } from "lucide-react";
+import { ArrowLeft, Bell, CheckCheck, AlertTriangle, ArrowDownLeft, ArrowUpRight, CalendarClock } from "lucide-react";
 import { useNotifications, type Notification } from "@/context/NotificationContext";
+import { useTranslation } from "@/context/LanguageContext";
+import { formatDateString } from "@/lib/dateLocale";
 
 const iconMap: Record<Notification["type"], typeof Bell> = {
   request: ArrowDownLeft,
@@ -9,7 +11,6 @@ const iconMap: Record<Notification["type"], typeof Bell> = {
   repayment: ArrowUpRight,
   reminder: CalendarClock,
   overdue: AlertTriangle,
-  "date-change": Clock,
 };
 
 const Notifications = () => {
@@ -63,7 +64,8 @@ const Notifications = () => {
   );
 };
 
-const NotificationCard = ({ notification, onRead }: { notification: Notification; onRead: (id: number) => void }) => {
+const NotificationCard = ({ notification, onRead }: { notification: Notification; onRead: (id: string) => void }) => {
+  const { language } = useTranslation();
   const Icon = iconMap[notification.type];
   return (
     <div
@@ -79,7 +81,7 @@ const NotificationCard = ({ notification, onRead }: { notification: Notification
           {!notification.read && <span className="w-2 h-2 rounded-full bg-primary shrink-0" />}
         </div>
         <p className="text-body-micro text-muted-foreground mt-0.5">{notification.message}</p>
-        <p className="text-body-micro text-muted-foreground/60 mt-1">{notification.timestamp}</p>
+        <p className="text-body-micro text-muted-foreground/60 mt-1">{formatDateString(notification.timestamp, language)}</p>
       </div>
     </div>
   );
