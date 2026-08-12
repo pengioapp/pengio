@@ -1,41 +1,25 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Users, CalendarDays, Percent, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, Users, Percent, ArrowUpRight } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
-import { useLoanContext } from "@/context/LoanContext";
 import { useTranslation } from "@/context/LanguageContext";
-
-type LoanStatus = "Due soon" | "Paid off" | "Overdue";
-
-interface MockLoan {
-  id: number;
-  title: string;
-  avatar: string;
-  status: LoanStatus;
-  outstandingBalance: string;
-  nextPayment: string;
-}
-
-const lentLoans: MockLoan[] = [
-  { id: 1, title: "Loan to Erik Johansen", avatar: "EJ", status: "Due soon", outstandingBalance: "4 000 kr", nextPayment: "29 March 2025" },
-  { id: 2, title: "Loan to Kaia Lunde", avatar: "KL", status: "Paid off", outstandingBalance: "0.00 kr", nextPayment: "" },
-  { id: 3, title: "Loan from Anna Kristoffersen", avatar: "AK", status: "Overdue", outstandingBalance: "4 000 kr", nextPayment: "29 March 2025" },
-];
-
-const borrowedLoans: MockLoan[] = [
-  { id: 4, title: "Loan to Erik Johansen", avatar: "EJ", status: "Due soon", outstandingBalance: "4 000 kr", nextPayment: "29 March 2025" },
-  { id: 5, title: "Loan to Kaia Lunde", avatar: "KL", status: "Paid off", outstandingBalance: "0.00 kr", nextPayment: "" },
-];
-
-const statusStyles: Record<LoanStatus, string> = {
-  "Due soon": "bg-primary/20 text-primary",
-  "Paid off": "bg-pengio-green/20 text-pengio-green",
-  "Overdue": "bg-destructive/20 text-destructive",
-};
+import { formatDateString } from "@/lib/dateLocale";
+import { useLoans } from "@/hooks/useLoans";
+import { formatAmount, type Loan } from "@/lib/loans";
 
 type TabType = "lent" | "borrowed";
 
-const CircularChart = ({ green, yellow, greenLabel, yellowLabel }: { green: number; yellow: number; greenLabel: string; yellowLabel: string }) => {
+const CircularChart = ({
+  green,
+  yellow,
+  greenLabel,
+  yellowLabel,
+}: {
+  green: number;
+  yellow: number;
+  greenLabel: string;
+  yellowLabel: string;
+}) => {
   const size = 180;
   const stroke = 24;
   const radius = (size - stroke) / 2;
@@ -49,8 +33,8 @@ const CircularChart = ({ green, yellow, greenLabel, yellowLabel }: { green: numb
   return (
     <div className="flex flex-col items-center gap-4">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="hsl(var(--pengio-green))" strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${greenArc} ${circumference - greenArc}`} strokeDashoffset={startOffset} transform={`rotate(0 ${size / 2} ${size / 2})`} />
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="hsl(var(--primary))" strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${yellowArc} ${circumference - yellowArc}`} strokeDashoffset={startOffset - greenArc - gap} transform={`rotate(0 ${size / 2} ${size / 2})`} />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="hsl(var(--pengio-green))" strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${greenArc} ${circumference - greenArc}`} strokeDashoffset={startOffset} />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="hsl(var(--primary))" strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${yellowArc} ${circumference - yellowArc}`} strokeDashoffset={startOffset - greenArc - gap} />
       </svg>
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2">
@@ -66,28 +50,65 @@ const CircularChart = ({ green, yellow, greenLabel, yellowLabel }: { green: numb
   );
 };
 
-const LoanCard = ({ loan }: { loan: MockLoan }) => {
+const statusStyles = {
+  dueSoon: "bg-primary/20 text-primary",
+  paidOff: "bg-pengio-green/20 text-pengio-green",
+  overdue: "bg-destructive/20 text-destructive",
+  active: "bg-pengio-blue/20 text-pengio-blue",
+} as const;
+
+type StatusKey = keyof typeof statusStyles;
+
+const statusOf = (loan: Loan): StatusKey => {
+  if (loan.status === "repaid") return "paidOff";
+  const due = new Date(loan.repaymentDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const daysLeft = Math.ceil((due.getTime() - today.getTime()) / 86_400_000);
+  if (daysLeft < 0) return "overdue";
+  if (daysLeft <= 7) return "dueSoon";
+  return "active";
+};
+
+const LoanCard = ({ loan }: { loan: Loan }) => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const status = statusOf(loan);
+
+  const statusLabel =
+    status === "paidOff" ? t("status.paidOff")
+    : status === "overdue" ? t("status.overdue")
+    : status === "dueSoon" ? t("status.dueSoon")
+    : t("status.active");
+
   return (
-    <div onClick={() => navigate("/loan-details", { state: { loan: { ...loan, amount: parseInt(loan.outstandingBalance.replace(/[^\d]/g, ""), 10) || 0 } } })} className="bg-secondary rounded-xl p-4 flex flex-col gap-3 cursor-pointer active:opacity-80 transition-opacity">
+    <div
+      onClick={() => navigate("/loan-details", { state: { loanId: loan.id } })}
+      className="bg-secondary rounded-xl p-4 flex flex-col gap-3 cursor-pointer active:opacity-80 transition-opacity"
+    >
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-muted-foreground/20 flex items-center justify-center text-xs font-bold text-foreground shrink-0">{loan.avatar}</div>
+        <div className="w-10 h-10 rounded-full bg-muted-foreground/20 flex items-center justify-center text-xs font-bold text-foreground shrink-0">
+          {loan.counterparty.initials}
+        </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-foreground">{loan.title}</p>
-          <span className={`inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyles[loan.status]}`}>{loan.status}</span>
+          <p className="text-sm font-medium text-foreground truncate">
+            {loan.role === "lender" ? t("loanDetails.loanTo") : t("loanDetails.loanFrom")} {loan.counterparty.name}
+          </p>
+          <span className={`inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusStyles[status]}`}>
+            {statusLabel}
+          </span>
         </div>
         <ArrowUpRight className="w-5 h-5 text-muted-foreground shrink-0" />
       </div>
       <div className="flex flex-col gap-1 text-xs">
         <div className="flex justify-between">
           <span className="text-muted-foreground">{t("loanSummary.outstandingBalance")}</span>
-          <span className="text-foreground font-medium">{loan.outstandingBalance}</span>
+          <span className="text-foreground font-medium">{formatAmount(loan.outstanding, loan.currency)}</span>
         </div>
-        {loan.nextPayment && (
+        {loan.status !== "repaid" && (
           <div className="flex justify-between">
             <span className="text-muted-foreground">{t("loanSummary.nextPayment")}</span>
-            <span className="text-foreground font-medium">{loan.nextPayment}</span>
+            <span className="text-foreground font-medium">{formatDateString(loan.repaymentDate, language)}</span>
           </div>
         )}
       </div>
@@ -98,8 +119,30 @@ const LoanCard = ({ loan }: { loan: MockLoan }) => {
 const LoanSummary = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { approvedLoans } = useLoanContext();
+  const { data: loans, isLoading } = useLoans();
   const [activeTab, setActiveTab] = useState<TabType>("lent");
+
+  const wantRole = activeTab === "lent" ? "lender" : "borrower";
+  const side = (loans ?? []).filter((l) => l.role === wantRole);
+
+  // Every figure below is computed from actual loans. The prototype showed
+  // fixed numbers here -- 17 500 kr lent, 4.2 % interest, a 70/30 chart --
+  // which on a financial summary reads as fact rather than placeholder.
+  const totalDueAll = side.reduce((sum, l) => sum + l.totalDue, 0);
+  const totalRepaid = side.reduce((sum, l) => sum + l.repaid, 0);
+  const totalOutstanding = side.reduce((sum, l) => sum + l.outstanding, 0);
+  const activeCount = side.filter((l) => l.status === "active").length;
+
+  const repaidPct = totalDueAll > 0 ? Math.round((totalRepaid / totalDueAll) * 100) : 0;
+  const remainingPct = 100 - repaidPct;
+
+  // Weighted by principal, so a large loan at a low rate is not averaged away
+  // by a small loan at a high one.
+  const principalSum = side.reduce((sum, l) => sum + l.principal, 0);
+  const avgInterest =
+    principalSum > 0
+      ? Math.round((side.reduce((sum, l) => sum + l.principal * l.interestPercent, 0) / principalSum) * 10) / 10
+      : 0;
 
   return (
     <div className="flex flex-col min-h-screen bg-background pb-24">
@@ -122,99 +165,56 @@ const LoanSummary = () => {
       </div>
 
       <div className="px-6 mt-5 flex-1 overflow-y-auto flex flex-col gap-4">
-        {activeTab === "lent" ? (
+        {isLoading && (
+          <div className="flex justify-center mt-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" role="status" aria-label="Loading" />
+          </div>
+        )}
+
+        {!isLoading && side.length === 0 && (
+          <p className="text-muted-foreground text-sm text-center mt-8">{t("loanSummary.nothingYet")}</p>
+        )}
+
+        {!isLoading && side.length > 0 && (
           <>
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-secondary rounded-xl p-4 flex flex-col gap-3">
-                <div className="w-10 h-10 rounded-lg bg-muted-foreground/20 flex items-center justify-center"><Users className="w-5 h-5 text-foreground" /></div>
-                <span className="text-xs text-muted-foreground">{t("loanSummary.totalLending")}</span>
-                <span className="text-xl font-bold text-foreground">17 500 kr</span>
-              </div>
-              <div className="bg-secondary rounded-xl p-4 flex flex-col gap-3">
-                <div className="w-10 h-10 rounded-lg bg-muted-foreground/20 flex items-center justify-center"><CalendarDays className="w-5 h-5 text-foreground" /></div>
-                <span className="text-xs text-muted-foreground">{t("loanSummary.totalMonthlyEarnings")}</span>
-                <span className="text-xl font-bold text-foreground">320 kr</span>
-              </div>
-            </div>
-
-            <div className="bg-secondary rounded-xl p-5">
-              <h3 className="text-base font-semibold text-foreground mb-4">{t("loanSummary.overview")}</h3>
-              <CircularChart green={70} yellow={30} greenLabel={`70 % ${t("loanSummary.repaid")}`} yellowLabel={`30 % ${t("loanSummary.remaining")}`} />
-            </div>
-
-            {approvedLoans.length > 0 && (
-              <div className="bg-secondary rounded-xl p-4">
-                <h3 className="text-base font-semibold text-foreground mb-3">{t("loanSummary.activeLoans")}</h3>
-                <div className="flex flex-col gap-3">
-                  {approvedLoans.map((loan) => (
-                    <div key={loan.id} className="flex items-center gap-3 bg-background/30 rounded-xl p-3">
-                      <div className="w-10 h-10 rounded-full bg-pengio-green flex items-center justify-center text-xs font-bold text-foreground shrink-0">{loan.borrowerAvatar}</div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground">{loan.borrowerName}</p>
-                        <p className="text-xs text-muted-foreground">{loan.amount.toLocaleString("nb-NO")} kr · {loan.repaymentPeriod} · {loan.interestPercent}%</p>
-                      </div>
-                      <span className="text-xs font-medium text-pengio-green shrink-0">{t("loanSummary.active")}</span>
-                    </div>
-                  ))}
+                <div className="w-10 h-10 rounded-lg bg-muted-foreground/20 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-foreground" />
                 </div>
-              </div>
-            )}
-
-            <div className="border border-primary/40 rounded-xl p-5 flex flex-col items-center text-center gap-2">
-              <span className="text-3xl">🎊</span>
-              <p className="text-sm text-foreground">{t("loanSummary.lentHighlight")}</p>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-base font-semibold text-foreground">{t("loanSummary.myLoans")}</h3>
-                <button className="text-sm text-muted-foreground">{t("loanSummary.viewAll")}</button>
-              </div>
-              <div className="flex flex-col gap-3">
-                {lentLoans.map((loan) => <LoanCard key={loan.id} loan={loan} />)}
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-secondary rounded-xl p-4 flex flex-col gap-3">
-                <div className="w-10 h-10 rounded-lg bg-muted-foreground/20 flex items-center justify-center"><Users className="w-5 h-5 text-foreground" /></div>
-                <span className="text-xs text-muted-foreground">{t("loanSummary.totalDebt")}</span>
-                <span className="text-xl font-bold text-foreground">5 500 kr</span>
+                <span className="text-xs text-muted-foreground">
+                  {activeTab === "lent" ? t("loanSummary.totalLending") : t("loanSummary.totalDebt")}
+                </span>
+                <span className="text-xl font-bold text-foreground">{formatAmount(totalOutstanding)}</span>
               </div>
               <div className="bg-secondary rounded-xl p-4 flex flex-col gap-3">
-                <div className="w-10 h-10 rounded-lg bg-muted-foreground/20 flex items-center justify-center"><CalendarDays className="w-5 h-5 text-foreground" /></div>
-                <span className="text-xs text-muted-foreground">{t("loanSummary.monthlyPayment")}</span>
-                <span className="text-xl font-bold text-foreground">1 200 kr</span>
+                <div className="w-10 h-10 rounded-lg bg-muted-foreground/20 flex items-center justify-center">
+                  <Percent className="w-5 h-5 text-foreground" />
+                </div>
+                <span className="text-xs text-muted-foreground">{t("loanSummary.avgInterest")}</span>
+                <span className="text-xl font-bold text-foreground">{avgInterest} %</span>
               </div>
             </div>
 
-            <div className="bg-secondary rounded-xl p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-muted-foreground/20 flex items-center justify-center"><Percent className="w-5 h-5 text-foreground" /></div>
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">{t("loanSummary.weightedInterest")}</span>
-                <span className="text-xl font-bold text-foreground">4.2 %</span>
-              </div>
+            <div className="bg-secondary rounded-xl p-4 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">{t("loanSummary.activeCount")}</span>
+              <span className="text-xl font-bold text-foreground">{activeCount}</span>
             </div>
 
             <div className="bg-secondary rounded-xl p-5">
               <h3 className="text-base font-semibold text-foreground mb-4">{t("loanSummary.overview")}</h3>
-              <CircularChart green={40} yellow={60} greenLabel={`40 % ${t("loanSummary.repaid")}`} yellowLabel={`60 % ${t("loanSummary.remaining")}`} />
-            </div>
-
-            <div className="border border-primary/40 rounded-xl p-5 flex flex-col items-center text-center gap-2">
-              <span className="text-3xl">🎊</span>
-              <p className="text-sm text-foreground">{t("loanSummary.borrowedHighlight")}</p>
+              <CircularChart
+                green={repaidPct}
+                yellow={remainingPct}
+                greenLabel={`${repaidPct} % ${t("loanSummary.repaid")}`}
+                yellowLabel={`${remainingPct} % ${t("loanSummary.remaining")}`}
+              />
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-base font-semibold text-foreground">{t("loanSummary.myLoans")}</h3>
-                <button className="text-sm text-muted-foreground">{t("loanSummary.viewAll")}</button>
-              </div>
+              <h3 className="text-base font-semibold text-foreground mb-3">{t("loanSummary.myLoans")}</h3>
               <div className="flex flex-col gap-3">
-                {borrowedLoans.map((loan) => <LoanCard key={loan.id} loan={loan} />)}
+                {side.map((loan) => <LoanCard key={loan.id} loan={loan} />)}
               </div>
             </div>
           </>

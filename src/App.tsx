@@ -25,7 +25,6 @@ import AlertsSetting from "./pages/AlertsSetting";
 import UpcomingPayments from "./pages/UpcomingPayments";
 import AllTransactions from "./pages/AllTransactions";
 import NotFound from "./pages/NotFound";
-import { LoanProvider } from "./context/LoanContext";
 import { LanguageProvider } from "./context/LanguageContext";
 import { AuthProvider } from "./context/AuthContext";
 import { NotificationProvider } from "./context/NotificationContext";
@@ -43,7 +42,6 @@ const App = () => (
         <LanguageProvider>
           <AuthProvider>
             <NotificationProvider>
-            <LoanProvider>
             <Routes>
               <Route path="/" element={<Splash />} />
               <Route path="/login" element={<Login />} />
@@ -70,7 +68,6 @@ const App = () => (
               <Route path="/notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </LoanProvider>
           </NotificationProvider>
           </AuthProvider>
         </LanguageProvider>

@@ -1,43 +1,42 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Coins, Clock, Percent, TrendingUp, CalendarIcon } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, Coins, Clock, Percent, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
-import { parse } from "date-fns";
-import { formatDate, getDateLocale } from "@/lib/dateLocale";
+import { formatDateString } from "@/lib/dateLocale";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { type LoanOffer } from "@/data/mockRequests";
-import { useLoanContext } from "@/context/LoanContext";
+import { useProposals, useRespondToProposal } from "@/hooks/useProposals";
 import RepaymentChart from "@/components/RepaymentChart";
 import { useTranslation } from "@/context/LanguageContext";
-import { useNotifications } from "@/context/NotificationContext";
-import { cn } from "@/lib/utils";
+import { totalDue, formatAmount } from "@/lib/loans";
 
 const LoanRequest = () => {
   const navigate = useNavigate();
-  const location = useLocation();
+  const { id } = useParams<{ id: string }>();
   const { t, language } = useTranslation();
-  const { acceptOffer, rejectOffer, updateOfferRepaymentDate } = useLoanContext();
-  const { addNotification } = useNotifications();
-  const offer = location.state?.offer as LoanOffer | undefined;
+  const { data: proposals, isLoading } = useProposals();
+  const respond = useRespondToProposal();
+
   const [showRejectDialog, setShowRejectDialog] = useState(false);
-  const [status, setStatus] = useState(offer?.status || "Pending");
   const [chartMode, setChartMode] = useState<"weekly" | "monthly">("monthly");
   const [rejectionReason, setRejectionReason] = useState("");
-  const [repaymentDate, setRepaymentDate] = useState<Date | undefined>(() => {
-    if (!offer?.repaymentPeriod) return undefined;
-    try {
-      return parse(offer.repaymentPeriod, "d MMMM yyyy", new Date());
-    } catch {
-      return undefined;
-    }
-  });
-  const [calendarOpen, setCalendarOpen] = useState(false);
+
+  const offer = proposals?.find((p) => p.id === id);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div
+          className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"
+          role="status"
+          aria-label="Loading"
+        />
+      </div>
+    );
+  }
 
   if (!offer) {
     return (
@@ -48,34 +47,35 @@ const LoanRequest = () => {
     );
   }
 
-  const earnings = Math.round(offer.amount * (offer.interestPercent / 100));
+  // The viewer of an offer is the borrower, so the interest is money they pay.
+  // The prototype labelled this "Earnings", which is true only for the lender.
+  const interestCost = Math.round(offer.amount * (offer.interestPercent / 100));
+  const settled = offer.status !== "pending";
 
-  const handleApprove = () => {
-    acceptOffer(offer.id);
-    setStatus("Approved");
-    addNotification({ title: "Loan offer accepted", message: `You accepted ${offer.senderName}'s loan offer of ${offer.amount.toLocaleString("nb-NO")} kr`, timestamp: "Just now", type: "approved" });
-    toast.success(t("loanRequest.approved"));
-    setTimeout(() => navigate("/overview", { state: { tab: "borrowed" } }), 800);
+  const handleApprove = async () => {
+    try {
+      await respond.mutateAsync({ proposalId: offer.id, accept: true });
+      toast.success(t("loanRequest.approved"));
+      navigate("/overview", { state: { tab: "borrowed" } });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (!date || !offer) return;
-    setRepaymentDate(date);
-    const formatted = formatDate(date, language);
-    updateOfferRepaymentDate(offer.id, formatted);
-    setCalendarOpen(false);
-    addNotification({ title: "Repayment date changed", message: `Repayment date updated to ${formatted}`, timestamp: "Just now", type: "date-change" });
-    toast.success(t("requestDetail.dateUpdated", { date: formatted }));
-  };
-
-  const handleReject = () => {
-    rejectOffer(offer.id, rejectionReason || undefined);
-    setStatus("Rejected");
-    setShowRejectDialog(false);
-    addNotification({ title: "Loan offer rejected", message: `You rejected ${offer.senderName}'s offer${rejectionReason ? `: ${rejectionReason}` : ""}`, timestamp: "Just now", type: "rejected" });
-    toast(t("loanRequest.rejected"));
-    setRejectionReason("");
-    setTimeout(() => navigate("/inbox"), 1200);
+  const handleReject = async () => {
+    try {
+      await respond.mutateAsync({
+        proposalId: offer.id,
+        accept: false,
+        reason: rejectionReason || undefined,
+      });
+      setShowRejectDialog(false);
+      setRejectionReason("");
+      toast(t("loanRequest.rejected"));
+      navigate("/inbox");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   return (
@@ -90,45 +90,21 @@ const LoanRequest = () => {
       <div className="flex-1 px-6 pb-8 flex flex-col overflow-y-auto">
         <div className="bg-secondary rounded-2xl p-4 mb-6">
           <div className="flex items-center gap-3 mb-5">
-            <div className="w-12 h-12 rounded-full bg-pengio-green flex items-center justify-center text-body-small font-bold text-foreground">{offer.senderAvatar}</div>
+            <div className="w-12 h-12 rounded-full bg-pengio-green flex items-center justify-center text-body-small font-bold text-foreground">{offer.counterparty.initials}</div>
             <div>
-              <p className="text-body-standard font-medium text-foreground">{t("loanRequest.hasOfferedLoan", { name: offer.senderName })}</p>
-              <p className="text-body-micro text-muted-foreground">{t("loanRequest.received", { time: offer.receivedAt.toLowerCase() })}</p>
+              <p className="text-body-standard font-medium text-foreground">{t("loanRequest.hasOfferedLoan", { name: offer.counterparty.name })}</p>
+              <p className="text-body-micro text-muted-foreground">{t("loanRequest.received", { time: formatDateString(offer.createdAt, language) })}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 mb-5">
             <InfoBlock icon={<Coins className="w-5 h-5 text-muted-foreground" />} label={t("loanRequest.amount")} value={`${offer.amount.toLocaleString("nb-NO")} kr`} />
-            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                <button className="bg-background/30 rounded-xl px-3 py-3 flex items-center gap-2.5 text-left hover:bg-background/40 transition-colors">
-                  <Clock className="w-5 h-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-body-micro text-muted-foreground">{t("loanRequest.repayment")}</p>
-                    <p className="text-body-standard font-bold text-foreground">
-                      {repaymentDate ? formatDate(repaymentDate, language) : offer.repaymentPeriod}
-                    </p>
-                  </div>
-                  <CalendarIcon className="w-4 h-4 text-primary" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={repaymentDate}
-                  onSelect={handleDateSelect}
-                  disabled={(date) => date <= new Date()}
-                  locale={getDateLocale(language)}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                />
-              </PopoverContent>
-            </Popover>
+            <InfoBlock icon={<Clock className="w-5 h-5 text-muted-foreground" />} label={t("loanRequest.repayment")} value={formatDateString(offer.repaymentDate, language)} />
             <InfoBlock icon={<Percent className="w-5 h-5 text-muted-foreground" />} label={t("loanRequest.interestRate")} value={`${offer.interestPercent} %`} />
-            <InfoBlock icon={<TrendingUp className="w-5 h-5 text-muted-foreground" />} label={t("loanRequest.earnings")} value={`${earnings.toLocaleString("nb-NO")} kr`} />
+            <InfoBlock icon={<TrendingUp className="w-5 h-5 text-muted-foreground" />} label={t("loanRequest.interestCost")} value={`${interestCost.toLocaleString("nb-NO")} kr`} />
           </div>
 
-          <RepaymentChart amount={offer.amount} mode={chartMode} />
+          <RepaymentChart amount={totalDue(offer.amount, offer.interestPercent)} mode={chartMode} />
           <div className="flex justify-center gap-3 mt-3">
             <button onClick={() => setChartMode("weekly")} className={`px-4 py-1.5 rounded-full text-body-small font-medium transition-colors ${chartMode === "weekly" ? "bg-secondary text-foreground border border-foreground/20" : "text-muted-foreground"}`}>
               {t("loanRequest.weekly")}
@@ -153,27 +129,35 @@ const LoanRequest = () => {
 
         <div className="mb-6">
           <h2 className="text-body-standard font-medium text-primary mb-2">{t("loanRequest.loanAgreement")}</h2>
-          <p className="text-body-small text-muted-foreground">
-            {t("loanRequest.bankIdText")}{" "}
-            <span className="text-foreground underline">{t("loanRequest.bankId")}</span>.
+          <p className="text-body-small text-muted-foreground">{t("loanRequest.agreementNote")}</p>
+          <p className="text-body-small text-muted-foreground mt-2">
+            {formatAmount(totalDue(offer.amount, offer.interestPercent), offer.currency)}
           </p>
         </div>
 
-        {status !== "Pending" && (
+        {settled && (
           <div className="flex justify-center mb-6">
-            <span className={`px-6 py-2 rounded-full text-body-standard font-bold ${status === "Approved" ? "bg-pengio-green/20 text-pengio-green" : "bg-destructive/20 text-destructive"}`}>
-              {status === "Approved" ? t("status.approved") : t("status.rejected")}
+            <span className={`px-6 py-2 rounded-full text-body-standard font-bold ${offer.status === "accepted" ? "bg-pengio-green/20 text-pengio-green" : "bg-destructive/20 text-destructive"}`}>
+              {offer.status === "accepted" ? t("status.approved") : t("status.rejected")}
             </span>
           </div>
         )}
 
-        {status === "Pending" && (
+        {!settled && (
           <div className="mt-auto pt-4 flex gap-3">
-            <button onClick={() => setShowRejectDialog(true)} className="flex-1 py-4 rounded-full bg-destructive text-foreground text-body-standard font-bold hover:bg-destructive/90 transition-all">
+            <button
+              onClick={() => setShowRejectDialog(true)}
+              disabled={respond.isPending}
+              className="flex-1 py-4 rounded-full bg-destructive text-foreground text-body-standard font-bold hover:bg-destructive/90 transition-all disabled:opacity-60"
+            >
               {t("buttons.reject")}
             </button>
-            <button onClick={handleApprove} className="flex-1 py-4 rounded-full bg-pengio-green text-foreground text-body-standard font-bold hover:bg-pengio-green-hover transition-all">
-              {t("buttons.approve")}
+            <button
+              onClick={handleApprove}
+              disabled={respond.isPending}
+              className="flex-1 py-4 rounded-full bg-pengio-green text-foreground text-body-standard font-bold hover:bg-pengio-green-hover transition-all disabled:opacity-60"
+            >
+              {respond.isPending ? "…" : t("buttons.approve")}
             </button>
           </div>
         )}
@@ -197,7 +181,7 @@ const LoanRequest = () => {
             <Button variant="outline" onClick={() => { setShowRejectDialog(false); setRejectionReason(""); }} className="flex-1 rounded-full border-foreground/20 text-foreground">
               {t("buttons.cancel")}
             </Button>
-            <Button onClick={handleReject} className="flex-1 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <Button onClick={handleReject} disabled={respond.isPending} className="flex-1 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {t("requestDetail.send")}
             </Button>
           </DialogFooter>
@@ -210,9 +194,9 @@ const LoanRequest = () => {
 const InfoBlock = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
   <div className="bg-background/30 rounded-xl px-3 py-3 flex items-center gap-2.5">
     {icon}
-    <div>
+    <div className="min-w-0">
       <p className="text-body-micro text-muted-foreground">{label}</p>
-      <p className="text-body-standard font-bold text-foreground">{value}</p>
+      <p className="text-body-standard font-bold text-foreground truncate">{value}</p>
     </div>
   </div>
 );
