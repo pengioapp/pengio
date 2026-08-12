@@ -48,6 +48,13 @@ correct on paper. It creates throwaway accounts each run; delete them from
 Authentication → Users. Point it at a development project, never one with real
 users.
 
+**`test:e2e` requires «Confirm email» to be off** (Authentication → Sign In /
+Providers → Email). It signs accounts up and immediately uses their session,
+which email confirmation deliberately prevents. Confirmation should stay *on*
+for anything real, so this test only runs against a project configured for
+development. It fails with a message naming the setting rather than something
+cryptic.
+
 ## Database
 
 Migrations live in `supabase/migrations/` and apply in filename order.
