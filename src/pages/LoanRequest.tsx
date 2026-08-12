@@ -9,7 +9,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useProposals, useRespondToProposal } from "@/hooks/useProposals";
-import RepaymentChart from "@/components/RepaymentChart";
 import { useTranslation } from "@/context/LanguageContext";
 import { totalDue, formatAmount } from "@/lib/loans";
 
@@ -21,7 +20,6 @@ const LoanRequest = () => {
   const respond = useRespondToProposal();
 
   const [showRejectDialog, setShowRejectDialog] = useState(false);
-  const [chartMode, setChartMode] = useState<"weekly" | "monthly">("monthly");
   const [rejectionReason, setRejectionReason] = useState("");
 
   const offer = proposals?.find((p) => p.id === id);
@@ -104,15 +102,6 @@ const LoanRequest = () => {
             <InfoBlock icon={<TrendingUp className="w-5 h-5 text-muted-foreground" />} label={t("loanRequest.interestCost")} value={`${interestCost.toLocaleString("nb-NO")} kr`} />
           </div>
 
-          <RepaymentChart amount={totalDue(offer.amount, offer.interestPercent)} mode={chartMode} />
-          <div className="flex justify-center gap-3 mt-3">
-            <button onClick={() => setChartMode("weekly")} className={`px-4 py-1.5 rounded-full text-body-small font-medium transition-colors ${chartMode === "weekly" ? "bg-secondary text-foreground border border-foreground/20" : "text-muted-foreground"}`}>
-              {t("loanRequest.weekly")}
-            </button>
-            <button onClick={() => setChartMode("monthly")} className={`px-4 py-1.5 rounded-full text-body-small font-medium transition-colors ${chartMode === "monthly" ? "border border-primary text-primary" : "text-muted-foreground"}`}>
-              {t("loanRequest.monthly")}
-            </button>
-          </div>
         </div>
 
         <div className="flex items-center justify-between mb-4">

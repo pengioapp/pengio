@@ -1,216 +1,237 @@
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, AlertCircle, Sparkles, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock } from "lucide-react";
+import { toast } from "sonner";
 import { useTranslation } from "@/context/LanguageContext";
-import { formatDateString, formatDuration } from "@/lib/dateLocale";
-
-const RepaymentChart = ({ paid, total }: { paid: number; total: number }) => {
-  const { t } = useTranslation();
-  const remaining = total - paid;
-  const paidPct = Math.round((paid / total) * 100);
-  const remainingPct = 100 - paidPct;
-  const size = 160;
-  const stroke = 20;
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const gap = 8;
-  const totalUsable = circumference - gap * 2;
-  const greenArc = (paidPct / 100) * totalUsable;
-  const yellowArc = (remainingPct / 100) * totalUsable;
-  const startOffset = circumference * 0.25;
-
-  return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="relative">
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="hsl(var(--pengio-green))" strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${greenArc} ${circumference - greenArc}`} strokeDashoffset={startOffset} />
-          <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="hsl(var(--primary))" strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${yellowArc} ${circumference - yellowArc}`} strokeDashoffset={startOffset - greenArc - gap} />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xs text-muted-foreground">{t("loanDetails.total")}</span>
-          <span className="text-lg font-bold text-primary">{total.toLocaleString("nb-NO")} kr</span>
-        </div>
-      </div>
-      <div className="flex items-center gap-6">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-sm bg-pengio-green" />
-          <span className="text-xs text-muted-foreground">{t("loanDetails.paid")} : {paid.toLocaleString("nb-NO")} kr ({paidPct} %)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-sm bg-primary" />
-          <span className="text-xs text-muted-foreground">{t("loanDetails.remainingLabel")} : {remaining.toLocaleString("nb-NO")} kr ({remainingPct} %)</span>
-        </div>
-      </div>
-    </div>
-  );
-};
+import { formatDateString } from "@/lib/dateLocale";
+import { useAuth } from "@/context/AuthContext";
+import { useLoans, useLoanPayments, useRecordPayment, useConfirmPayment } from "@/hooks/useLoans";
+import { formatAmount } from "@/lib/loans";
 
 const LoanDetails = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, language } = useTranslation();
-  const passedLoan = location.state?.loan;
+  const { session } = useAuth();
 
-  const parseAmount = (str: string) => {
-    const num = parseInt(str.replace(/[^\d]/g, ""), 10);
-    return isNaN(num) ? 0 : num;
+  const loanId = (location.state as { loanId?: string } | null)?.loanId;
+  const fromTab = (location.state as { fromTab?: string } | null)?.fromTab;
+
+  const { data: loans, isLoading } = useLoans();
+  const { data: payments } = useLoanPayments(loanId);
+  const recordPayment = useRecordPayment();
+  const confirmPayment = useConfirmPayment();
+
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+
+  const loan = loans?.find((l) => l.id === loanId);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" role="status" aria-label="Loading" />
+      </div>
+    );
+  }
+
+  if (!loan) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background px-6">
+        <p className="text-foreground text-body-standard mb-4">{t("loanDetails.notFound")}</p>
+        <button onClick={() => navigate("/overview")} className="text-primary text-body-small">{t("loanDetails.back")}</button>
+      </div>
+    );
+  }
+
+  const handleRecord = async () => {
+    const value = parseFloat(amount.replace(/\s/g, "").replace(",", "."));
+    if (!Number.isFinite(value) || value <= 0) {
+      toast.error(t("proposal.amountRequired"));
+      return;
+    }
+    try {
+      await recordPayment.mutateAsync({ loanId: loan.id, amount: value, note });
+      setAmount("");
+      setNote("");
+      toast.success(t("loanDetails.paymentRecorded"));
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
-  const lentAmount = passedLoan ? (passedLoan.amount || parseAmount(passedLoan.outstandingBalance)) : 5000;
-  const isLent = passedLoan
-    ? (passedLoan.title?.includes(t("loanDetails.loanTo")) || passedLoan.title?.startsWith("Loan to"))
-    : true;
-  const isPaidOff = passedLoan
-    ? (passedLoan.status === t("status.paidOff") || passedLoan.status === "Paid off" || passedLoan.status === "Paid Off")
-    : false;
-
-  const loan = passedLoan ? {
-    title: passedLoan.title,
-    subtitle: isLent ? t("loanDetails.youAreLender") : t("loanDetails.youAreBorrower"),
-    avatar: passedLoan.avatar,
-    status: passedLoan.status,
-    outstandingBalance: isPaidOff ? 0 : Math.round(lentAmount * 0.24),
-    crossedBalance: isPaidOff ? 0 : Math.round(lentAmount * 0.76),
-    lentAmount: lentAmount,
-    interestRate: passedLoan.interestRate || "5 %",
-    monthlyInstallment: `${Math.round(lentAmount / 4)} kr`,
-    nextPaymentDue: formatDateString(passedLoan.nextPayment || "—", language),
-    totalDuration: formatDuration(3, language),
-    remaining: isPaidOff ? formatDuration(0, language) : formatDuration(2, language),
-    totalPaid: isPaidOff ? lentAmount : Math.round(lentAmount * 0.76),
-    totalAmount: lentAmount,
-  } : {
-    title: `${t("loanDetails.loanTo")} Erik Johansen`,
-    subtitle: t("loanDetails.youAreLender"),
-    avatar: "EJ",
-    status: t("status.dueSoon"),
-    outstandingBalance: 1200,
-    crossedBalance: 3800,
-    lentAmount: 5000,
-    interestRate: "5 %",
-    monthlyInstallment: "950 kr",
-    nextPaymentDue: formatDateString("28 March 2025", language),
-    totalDuration: formatDuration(3, language),
-    remaining: formatDuration(2, language),
-    totalPaid: 1200,
-    totalAmount: 5000,
+  const handleConfirm = async (paymentId: string) => {
+    try {
+      await confirmPayment.mutateAsync({ paymentId, loanId: loan.id });
+      toast.success(t("loanDetails.confirmed"));
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
-  const progressPct = ((loan.lentAmount - loan.outstandingBalance) / loan.lentAmount) * 100;
+  const isLender = loan.role === "lender";
+  const progressPct = loan.totalDue > 0 ? Math.round((loan.repaid / loan.totalDue) * 100) : 0;
 
   return (
     <div className="flex flex-col min-h-screen bg-background pb-8">
       <div className="px-6 pt-8 pb-2 flex items-center relative">
-        <button onClick={() => {
-          const fromTab = location.state?.fromTab;
-          if (fromTab) navigate("/overview", { state: { tab: fromTab } });
-          else navigate(-1);
-        }} className="absolute left-4 p-2">
+        <button
+          onClick={() => navigate("/overview", fromTab ? { state: { tab: fromTab } } : undefined)}
+          className="absolute left-4 p-2"
+        >
           <ArrowLeft className="w-6 h-6 text-foreground" />
         </button>
-        <h1 className="text-xl text-primary font-bold text-center w-full">{t("loanDetails.title")}</h1>
+        <h1 className="text-title text-primary font-bold text-center w-full">{t("loanDetails.title")}</h1>
       </div>
 
       <div className="px-6 mt-5 flex-1 overflow-y-auto flex flex-col gap-4">
-        <div className="bg-secondary rounded-xl p-5 flex flex-col gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-muted-foreground/30 flex items-center justify-center text-sm font-bold text-foreground shrink-0">{loan.avatar}</div>
-            <div className="flex-1 min-w-0">
-              <p className="text-base font-semibold text-foreground">{loan.title}</p>
-              <p className="text-xs text-muted-foreground">{loan.subtitle}</p>
+        <div className="bg-secondary rounded-xl p-4">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-full bg-muted-foreground/30 flex items-center justify-center text-sm font-bold text-foreground shrink-0">
+              {loan.counterparty.initials}
             </div>
-            <span className="text-[10px] font-semibold px-3 py-1 rounded-full bg-primary/20 text-primary shrink-0">{loan.status}</span>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">{t("loanDetails.outstandingBalance")} :</span>
-                <span className="text-xs text-muted-foreground line-through">kr {loan.crossedBalance.toLocaleString("nb-NO")}</span>
-              </div>
-              <span className="text-base font-bold text-primary">{loan.outstandingBalance.toLocaleString("nb-NO")} kr</span>
-            </div>
-            <div className="w-full h-3 bg-muted-foreground/20 rounded-full overflow-hidden">
-              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${progressPct}%` }} />
-            </div>
-            <div className="flex items-center justify-between mt-2">
-              <span className="text-xs text-muted-foreground">{t("loanDetails.lentAmount")}</span>
-              <span className="text-xs text-foreground font-medium">{loan.lentAmount.toLocaleString("nb-NO")} kr</span>
+            <div className="min-w-0">
+              <p className="text-base font-semibold text-foreground truncate">
+                {isLender ? t("loanDetails.loanTo") : t("loanDetails.loanFrom")} {loan.counterparty.name}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {isLender ? t("loanDetails.youAreLender") : t("loanDetails.youAreBorrower")}
+              </p>
             </div>
           </div>
 
-          <div className="border-t border-muted-foreground/20" />
-
-          <div className="flex flex-col gap-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">{t("loanDetails.interestRate")}</span>
-              <span className="text-sm text-foreground font-medium">{loan.interestRate}</span>
-            </div>
-            <div className="border-t border-muted-foreground/10" />
-            <div className="flex justify-between items-start">
-              <div className="flex flex-col">
-                <span className="text-sm text-muted-foreground">{t("loanDetails.monthlyInstallment")}</span>
-                <span className="text-[10px] text-muted-foreground/60">{t("loanDetails.installmentSubtext")}</span>
-              </div>
-              <span className="text-sm text-foreground font-medium">{loan.monthlyInstallment}</span>
-            </div>
-            <div className="border-t border-muted-foreground/10" />
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">{t("loanDetails.nextPaymentDue")}</span>
-              <span className="text-sm text-foreground font-medium">{loan.nextPaymentDue}</span>
-            </div>
-            <div className="border-t border-muted-foreground/10" />
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">{t("loanDetails.totalDuration")}</span>
-              <span className="text-sm text-foreground font-medium">{loan.totalDuration}</span>
-            </div>
-            <div className="border-t border-muted-foreground/10" />
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">{t("loanDetails.remaining")}</span>
-              <span className="text-sm text-foreground font-medium">{loan.remaining}</span>
-            </div>
+          <div className="flex flex-col gap-2">
+            <Row label={t("loanDetails.principal")} value={formatAmount(loan.principal, loan.currency)} />
+            <Row label={t("loanDetails.interestRate")} value={`${loan.interestPercent} %`} />
+            <Row label={t("loanDetails.totalRepayable")} value={formatAmount(loan.totalDue, loan.currency)} />
+            <Row label={t("loanDetails.repaid")} value={formatAmount(loan.repaid, loan.currency)} />
+            <Row
+              label={t("loanDetails.outstandingBalance")}
+              value={formatAmount(loan.outstanding, loan.currency)}
+              emphasis
+            />
+            <Row label={t("loanDetails.repaymentDate")} value={formatDateString(loan.repaymentDate, language)} />
           </div>
         </div>
 
-        <div className="bg-secondary rounded-xl p-5">
-          <h3 className="text-base font-semibold text-foreground mb-4">{t("loanDetails.repaymentProgress")}</h3>
-          <RepaymentChart paid={loan.totalPaid} total={loan.totalAmount} />
+        {/* A progress bar rather than a time series: a loan has one repayment
+            date, not an instalment schedule, so there is no real curve to plot.
+            This shows the one thing that is actually known. */}
+        <div className="bg-secondary rounded-xl p-4">
+          <h3 className="text-base font-semibold text-foreground mb-3">{t("loanDetails.repaymentProgress")}</h3>
+          <div className="h-3 w-full rounded-full bg-background/40 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-pengio-green transition-all"
+              style={{ width: `${progressPct}%` }}
+              role="progressbar"
+              aria-valuenow={progressPct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            />
+          </div>
+          <div className="flex justify-between mt-2">
+            <span className="text-xs text-muted-foreground">
+              {t("loanDetails.paid")}: {formatAmount(loan.repaid, loan.currency)} ({progressPct} %)
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {t("loanDetails.remainingLabel")}: {formatAmount(loan.outstanding, loan.currency)}
+            </span>
+          </div>
         </div>
 
-        <div className="border border-primary/40 rounded-xl p-5 flex flex-col items-center text-center gap-2">
-          <span className="text-3xl">🎊</span>
-          <p className="text-sm text-foreground">{t("loanDetails.earnedInterest")}</p>
-        </div>
+        {loan.status === "active" && (
+          <div className="bg-secondary rounded-xl p-4">
+            <h3 className="text-base font-semibold text-foreground mb-1">{t("loanDetails.recordPayment")}</h3>
+            {/* Pengio never moves the money, so a payment row is a statement
+                about something that happened elsewhere. Saying so here stops
+                anyone reading "Record" as "Send". */}
+            <p className="text-xs text-muted-foreground mb-3">{t("loanDetails.settlementNote")}</p>
+            <div className="flex flex-col gap-2">
+              <input
+                type="text"
+                inputMode="decimal"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value.replace(/[^0-9.,]/g, ""))}
+                placeholder={t("loanDetails.amountPlaceholder")}
+                className="bg-background/30 rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none"
+              />
+              <input
+                type="text"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder={t("loanDetails.notePlaceholder")}
+                maxLength={500}
+                className="bg-background/30 rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none"
+              />
+              <button
+                onClick={handleRecord}
+                disabled={recordPayment.isPending}
+                className="mt-1 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-bold disabled:opacity-60"
+              >
+                {recordPayment.isPending ? "…" : t("loanDetails.record")}
+              </button>
+            </div>
+          </div>
+        )}
 
         <div>
-          <h3 className="text-base font-semibold text-foreground mb-3">{t("loanDetails.smartTips")}</h3>
-          <div className="bg-secondary rounded-xl p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-              <Sparkles className="w-5 h-5 text-primary" />
-            </div>
-            <p className="text-sm text-foreground">{t("loanDetails.tipMessage")}</p>
-          </div>
-        </div>
+          <h3 className="text-base font-semibold text-foreground mb-3">{t("loanDetails.payments")}</h3>
 
-        <div>
-          <h3 className="text-base font-semibold text-foreground mb-3">{t("loanDetails.alerts")}</h3>
+          {(!payments || payments.length === 0) && (
+            <p className="text-sm text-muted-foreground">{t("loanDetails.noPayments")}</p>
+          )}
+
           <div className="flex flex-col gap-3">
-            <div className="bg-secondary rounded-xl p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-muted-foreground/20 flex items-center justify-center shrink-0">
-                <AlertCircle className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <p className="text-sm text-foreground">{t("loanDetails.paymentDueSoon")}</p>
-            </div>
-            <div className="bg-secondary rounded-xl p-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-muted-foreground/20 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <p className="text-sm text-foreground">{t("loanDetails.nearlyCompleted")}</p>
-            </div>
+            {payments?.map((payment) => {
+              const mine = payment.recordedBy === session?.user?.id;
+              // Only the lender confirms, and never a payment they entered
+              // themselves -- that one is already self-confirmed.
+              const canConfirm = !payment.confirmed && isLender && !mine;
+
+              return (
+                <div key={payment.id} className="bg-secondary rounded-xl p-4 flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${payment.confirmed ? "bg-pengio-green/20" : "bg-muted-foreground/20"}`}>
+                    {payment.confirmed
+                      ? <CheckCircle2 className="w-4 h-4 text-pengio-green" />
+                      : <Clock className="w-4 h-4 text-muted-foreground" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground">
+                      {formatAmount(payment.amount, loan.currency)}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {formatDateString(payment.paidAt, language)}
+                      {payment.confirmed
+                        ? ""
+                        : ` · ${canConfirm ? t("loanDetails.awaitingConfirmation") : t("loanDetails.awaitingTheirConfirmation")}`}
+                      {mine ? ` · ${t("loanDetails.recordedByYou")}` : ""}
+                    </p>
+                    {payment.note && <p className="text-xs text-muted-foreground mt-0.5 truncate">{payment.note}</p>}
+                  </div>
+                  {canConfirm && (
+                    <button
+                      onClick={() => handleConfirm(payment.id)}
+                      disabled={confirmPayment.isPending}
+                      className="px-3 py-1.5 rounded-full bg-pengio-green text-foreground text-xs font-bold shrink-0 disabled:opacity-60"
+                    >
+                      {t("loanDetails.confirm")}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
     </div>
   );
 };
+
+const Row = ({ label, value, emphasis }: { label: string; value: string; emphasis?: boolean }) => (
+  <div className="flex items-center justify-between">
+    <span className="text-sm text-muted-foreground">{label}</span>
+    <span className={`text-sm font-medium ${emphasis ? "text-primary" : "text-foreground"}`}>{value}</span>
+  </div>
+);
 
 export default LoanDetails;
