@@ -131,6 +131,46 @@ export function useRespondToProposal() {
   });
 }
 
+export interface CounterProposalInput {
+  proposalId: string;
+  amount: number;
+  interestPercent: number;
+  repaymentDate: string;
+  message?: string;
+  condition?: string;
+}
+
+/**
+ * Answers a proposal with different terms rather than accepting or declining.
+ *
+ * The original is marked countered and the reply becomes a new proposal the
+ * other side must accept -- which is why terms are never editable in place.
+ * Borrower and lender carry over; only the initiator flips, so countering a
+ * request produces an offer and vice versa.
+ */
+export function useCounterProposal() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: CounterProposalInput) => {
+      const { data, error } = await supabase.rpc("counter_proposal", {
+        proposal: input.proposalId,
+        new_amount: input.amount,
+        new_interest_percent: input.interestPercent,
+        new_repayment_date: input.repaymentDate,
+        new_message: input.message?.trim() || undefined,
+        new_condition: input.condition?.trim() || undefined,
+      });
+
+      if (error) throw new Error(error.message);
+      return data as string;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: proposalsKey });
+    },
+  });
+}
+
 export function useCancelProposal() {
   const queryClient = useQueryClient();
 

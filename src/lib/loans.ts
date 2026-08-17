@@ -25,6 +25,8 @@ export interface Proposal {
   condition: string | null;
   status: ProposalRow["status"];
   rejectionReason: string | null;
+  /** The proposal this one replaced, when it is a counter. */
+  counterTo: string | null;
   createdAt: string;
 }
 
@@ -88,6 +90,9 @@ export const toProposal = (
     condition: row.condition,
     status: row.status,
     rejectionReason: row.rejection_reason,
+    // Coalesced rather than passed straight through, so this stays correct
+    // against a database where the counter-offer migration has not run yet.
+    counterTo: row.counter_to ?? null,
     createdAt: row.created_at,
   };
 };

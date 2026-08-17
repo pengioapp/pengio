@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useProposals, useRespondToProposal } from "@/hooks/useProposals";
 import { useTranslation } from "@/context/LanguageContext";
+import CounterDialog from "@/components/CounterDialog";
 import { totalDue, formatAmount } from "@/lib/loans";
 
 const LoanRequest = () => {
@@ -20,6 +21,7 @@ const LoanRequest = () => {
   const respond = useRespondToProposal();
 
   const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [showCounterDialog, setShowCounterDialog] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
 
   const offer = proposals?.find((p) => p.id === id);
@@ -126,14 +128,27 @@ const LoanRequest = () => {
 
         {settled && (
           <div className="flex justify-center mb-6">
-            <span className={`px-6 py-2 rounded-full text-body-standard font-bold ${offer.status === "accepted" ? "bg-pengio-green/20 text-pengio-green" : "bg-destructive/20 text-destructive"}`}>
-              {offer.status === "accepted" ? t("status.approved") : t("status.rejected")}
+            <span className={`px-6 py-2 rounded-full text-body-standard font-bold ${
+              offer.status === "accepted" ? "bg-pengio-green/20 text-pengio-green"
+              : offer.status === "countered" ? "bg-primary/20 text-primary"
+              : "bg-destructive/20 text-destructive"}`}>
+              {offer.status === "accepted" ? t("status.approved")
+               : offer.status === "countered" ? t("counter.wasCountered")
+               : t("status.rejected")}
             </span>
           </div>
         )}
 
         {!settled && (
-          <div className="mt-auto pt-4 flex gap-3">
+          <div className="mt-auto pt-4 flex flex-col gap-3">
+            <button
+              onClick={() => setShowCounterDialog(true)}
+              disabled={respond.isPending}
+              className="w-full py-3 rounded-full border border-primary text-primary text-body-standard font-bold hover:bg-primary/10 transition-all disabled:opacity-60"
+            >
+              {t("counter.button")}
+            </button>
+            <div className="flex gap-3">
             <button
               onClick={() => setShowRejectDialog(true)}
               disabled={respond.isPending}
@@ -148,9 +163,17 @@ const LoanRequest = () => {
             >
               {respond.isPending ? "…" : t("buttons.approve")}
             </button>
+            </div>
           </div>
         )}
       </div>
+
+      <CounterDialog
+        proposal={offer}
+        open={showCounterDialog}
+        onOpenChange={setShowCounterDialog}
+        onCountered={() => navigate("/inbox")}
+      />
 
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
         <DialogContent className="bg-secondary border-foreground/10 max-w-[340px] rounded-2xl">

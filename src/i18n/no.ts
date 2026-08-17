@@ -341,6 +341,18 @@ const no = {
   "status.rejected": "Avslått",
 
   // Buttons
+  "counter.button": "Motbud",
+  "counter.title": "Foresl\u00e5 andre vilk\u00e5r",
+  "counter.description": "Dette erstatter deres forslag med ditt. De kan godta, avsl\u00e5 eller komme med et nytt motbud.",
+  "counter.amount": "Bel\u00f8p",
+  "counter.interest": "Rente %",
+  "counter.date": "Nedbetalingsdato",
+  "counter.message": "Melding (valgfritt)",
+  "counter.send": "Send motbud",
+  "counter.sent": "Motbud sendt",
+  "counter.wasCountered": "Motbud sendt",
+  "counter.isCounter": "Dette er et motbud p\u00e5 et tidligere forslag.",
+  "counter.total": "De betaler tilbake {total} totalt",
   "buttons.approve": "Godkjenn",
   "buttons.reject": "Avslå",
   "buttons.cancel": "Avbryt",

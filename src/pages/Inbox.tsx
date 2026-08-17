@@ -65,8 +65,13 @@ const Inbox = () => {
           {p.counterparty.name} – {p.amount.toLocaleString("nb-NO")} kr
         </p>
       </div>
-      <span className={`text-body-micro font-medium shrink-0 ${p.status === "accepted" ? "text-pengio-green" : "text-destructive"}`}>
-        {p.status === "accepted" ? t("status.approved") : t("status.rejected")}
+      <span className={`text-body-micro font-medium shrink-0 ${
+        p.status === "accepted" ? "text-pengio-green"
+        : p.status === "countered" ? "text-primary"
+        : "text-destructive"}`}>
+        {p.status === "accepted" ? t("status.approved")
+         : p.status === "countered" ? t("counter.wasCountered")
+         : t("status.rejected")}
       </span>
     </div>
   );

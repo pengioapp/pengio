@@ -341,6 +341,18 @@ const en = {
   "status.rejected": "Rejected",
 
   // Buttons
+  "counter.button": "Counter",
+  "counter.title": "Propose different terms",
+  "counter.description": "This replaces their proposal with yours. They can accept, decline, or counter again.",
+  "counter.amount": "Amount",
+  "counter.interest": "Interest %",
+  "counter.date": "Repayment date",
+  "counter.message": "Message (optional)",
+  "counter.send": "Send counter",
+  "counter.sent": "Counter sent",
+  "counter.wasCountered": "Countered",
+  "counter.isCounter": "This is a counter to an earlier proposal.",
+  "counter.total": "They repay {total} in total",
   "buttons.approve": "Approve",
   "buttons.reject": "Reject",
   "buttons.cancel": "Cancel",

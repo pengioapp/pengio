@@ -64,6 +64,7 @@ export type Database = {
           amount: number
           borrower_id: string
           condition: string | null
+          counter_to: string | null
           created_at: string
           currency: string
           id: string
@@ -80,6 +81,7 @@ export type Database = {
           amount: number
           borrower_id: string
           condition?: string | null
+          counter_to?: string | null
           created_at?: string
           currency?: string
           id?: string
@@ -96,6 +98,7 @@ export type Database = {
           amount?: number
           borrower_id?: string
           condition?: string | null
+          counter_to?: string | null
           created_at?: string
           currency?: string
           id?: string
@@ -121,6 +124,13 @@ export type Database = {
             columns: ["lender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_proposals_counter_to_fkey"
+            columns: ["counter_to"]
+            isOneToOne: true
+            referencedRelation: "loan_proposals"
             referencedColumns: ["id"]
           },
           {
@@ -360,6 +370,17 @@ export type Database = {
         Args: { payment: string }
         Returns: undefined
       }
+      counter_proposal: {
+        Args: {
+          proposal: string
+          new_amount: number
+          new_interest_percent: number
+          new_repayment_date: string
+          new_message?: string
+          new_condition?: string
+        }
+        Returns: string
+      }
       loan_amount_repaid: {
         Args: { loan: string }
         Returns: number
@@ -383,7 +404,8 @@ export type Database = {
         | "payment_confirmed"
         | "loan_repaid"
         | "repayment_due_soon"
-      proposal_status: "pending" | "accepted" | "rejected" | "cancelled"
+        | "proposal_countered"
+      proposal_status: "pending" | "accepted" | "rejected" | "cancelled" | "countered"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -520,8 +542,9 @@ export const Constants = {
         "payment_confirmed",
         "loan_repaid",
         "repayment_due_soon",
+        "proposal_countered",
       ],
-      proposal_status: ["pending", "accepted", "rejected", "cancelled"],
+      proposal_status: ["pending", "accepted", "rejected", "cancelled", "countered"],
     },
   },
 } as const

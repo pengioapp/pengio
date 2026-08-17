@@ -281,6 +281,94 @@ await as(anna, async () => {
   check('a negative amount is rejected', d.denied, d.msg);
 });
 
+
+console.log('\n--- counter-offers ---');
+let counterId;
+let originalId;
+
+await as(anna, async () => {
+  const r = await db.query(
+    `insert into public.loan_proposals (borrower_id, lender_id, initiated_by, amount, interest_percent, repayment_date, message)
+     values ($1, $2, $1, 3000, 8, '2026-11-01', 'Can you help?') returning id`, [anna, erik]);
+  originalId = r.rows[0].id;
+  check('a fresh proposal can be raised for countering', !!originalId);
+});
+
+await as(anna, async () => {
+  const d = await denied(() => db.query(
+    `select public.counter_proposal($1, 3000, 4, '2026-11-01')`, [originalId]));
+  check('the initiator cannot counter their own proposal', d.denied, d.msg);
+});
+
+await as(mallory, async () => {
+  const d = await denied(() => db.query(
+    `select public.counter_proposal($1, 3000, 4, '2026-11-01')`, [originalId]));
+  check('an outsider cannot counter', d.denied, d.msg);
+});
+
+await as(erik, async () => {
+  const d = await denied(() => db.query(
+    `select public.counter_proposal($1, -100, 4, '2026-11-01')`, [originalId]));
+  check('a counter with a negative amount is rejected', d.denied, d.msg);
+});
+
+await as(erik, async () => {
+  const r = await db.query(
+    `select public.counter_proposal($1, 3000, 4, '2026-11-15', 'I can do 4%') as id`, [originalId]);
+  counterId = r.rows[0].id;
+  check('the recipient can counter', !!counterId);
+});
+
+{
+  const orig = await db.query(`select status, responded_at from public.loan_proposals where id = $1`, [originalId]);
+  check('the original is marked countered',
+    orig.rows[0].status === 'countered' && orig.rows[0].responded_at !== null,
+    JSON.stringify(orig.rows[0]));
+
+  const c = await db.query(
+    `select borrower_id, lender_id, initiated_by, amount, interest_percent, counter_to,
+            public.proposal_kind(p) as kind
+     from public.loan_proposals p where id = $1`, [counterId]);
+  const row = c.rows[0];
+  check('the counter keeps both parties', row.borrower_id === anna && row.lender_id === erik);
+  check('the counter flips the initiator', row.initiated_by === erik);
+  check('a countered request becomes an offer', row.kind === 'offer', `kind=${row.kind}`);
+  check('the counter carries the new terms',
+    Number(row.amount) === 3000 && Number(row.interest_percent) === 4);
+  check('the counter links back to the original', row.counter_to === originalId);
+}
+
+await as(erik, async () => {
+  const d = await denied(() => db.query(
+    `select public.counter_proposal($1, 3000, 2, '2026-11-15')`, [originalId]));
+  check('a proposal cannot be countered twice', d.denied, d.msg);
+});
+
+await as(erik, async () => {
+  const d = await denied(() => db.query(`select public.respond_to_proposal($1, true)`, [counterId]));
+  check('the counter-offerer cannot accept their own counter', d.denied, d.msg);
+});
+
+await as(mallory, async () => {
+  const r = await db.query(`select id from public.loan_proposals where id = $1`, [counterId]);
+  check('a third party cannot see the counter', r.rows.length === 0, `saw ${r.rows.length}`);
+});
+
+await as(anna, async () => {
+  const r = await db.query(`select type from public.notifications where proposal_id = $1`, [counterId]);
+  check('the original proposer is told it was countered',
+    r.rows.some((x) => x.type === 'proposal_countered'), JSON.stringify(r.rows.map(x => x.type)));
+});
+
+await as(anna, async () => {
+  const r = await db.query(`select public.respond_to_proposal($1, true) as id`, [counterId]);
+  check('accepting a counter creates the loan', !!r.rows[0].id);
+  const l = await db.query(`select principal, interest_percent from public.loans where id = $1`, [r.rows[0].id]);
+  check('the loan uses the countered terms',
+    Number(l.rows[0].principal) === 3000 && Number(l.rows[0].interest_percent) === 4,
+    JSON.stringify(l.rows[0]));
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 await db.end();
 await pg.stop();
