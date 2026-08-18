@@ -60,10 +60,18 @@ console.log('\n--- profile visibility ---');
 const { data: annaSees } = await anna.sb.from('profiles').select('id');
 check('a new user sees only themselves', annaSees?.length === 1, `saw ${annaSees?.length}`);
 
-await anna.sb.from('contacts').insert({
-  owner_id: anna.id, contact_user_id: erik.id,
-  display_name: erik.name, email: erik.email,
-});
+// By email only, exactly as the app does. Supplying contact_user_id here is
+// what hid a total failure of this flow: the client cannot look that id up,
+// because row level security hides the profile until the two are connected.
+const { data: addedContact, error: contactError } = await anna.sb
+  .from('contacts')
+  .insert({ owner_id: anna.id, display_name: erik.name, email: erik.email })
+  .select('contact_user_id')
+  .single();
+
+check('adding a contact by email links the account',
+  addedContact?.contact_user_id === erik.id,
+  contactError?.message ?? `got ${addedContact?.contact_user_id}`);
 
 const { data: erikSees } = await erik.sb.from('profiles').select('id');
 check('visibility becomes mutual once either side adds the other',

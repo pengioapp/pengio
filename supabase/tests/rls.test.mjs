@@ -369,6 +369,57 @@ await as(anna, async () => {
     JSON.stringify(l.rows[0]));
 });
 
+
+console.log('\n--- contact linking (the path the app actually uses) ---');
+// The earlier tests set contact_user_id directly, which is not what the app
+// does and is why a total failure of this flow went unnoticed.
+{
+  await as(anna, async () => {
+    const r = await db.query(
+      `insert into public.contacts (owner_id, display_name, email)
+       values ($1, 'Kaia Lunde', $2) returning contact_user_id`,
+      [anna, 'MALLORY@TEST.COM']);
+    check('adding a contact by email alone links the account',
+      r.rows[0].contact_user_id === mallory,
+      `got ${r.rows[0].contact_user_id}, expected ${mallory}`);
+  });
+
+  await as(anna, async () => {
+    const r = await db.query(
+      `insert into public.contacts (owner_id, display_name, email)
+       values ($1, 'Nobody', 'no-such-person@example.test') returning contact_user_id`, [anna]);
+    check('an unknown email leaves the contact unlinked', r.rows[0].contact_user_id === null);
+    await db.query(`delete from public.contacts where id = $1`, [r.rows[0].id]).catch(() => {});
+  });
+
+  // Added before they join, so nothing exists to link to yet.
+  await as(erik, async () => {
+    await db.query(
+      `insert into public.contacts (owner_id, display_name, email)
+       values ($1, 'Late Joiner', 'late-joiner@example.test')`, [erik]);
+  });
+
+  const beforeSignup = await db.query(
+    `select contact_user_id from public.contacts where owner_id = $1 and email = 'late-joiner@example.test'`, [erik]);
+  check('a contact added before the person joins starts unlinked',
+    beforeSignup.rows[0].contact_user_id === null);
+
+  // Signing up creates the profile, whose trigger should complete the link.
+  const lateJoiner = await uid('late-joiner@example.test', 'Late Joiner');
+  const afterSignup = await db.query(
+    `select contact_user_id from public.contacts where owner_id = $1 and email = 'late-joiner@example.test'`, [erik]);
+  check('the link completes once that person signs up',
+    afterSignup.rows[0].contact_user_id === lateJoiner,
+    `got ${afterSignup.rows[0].contact_user_id}`);
+
+  await as(anna, async () => {
+    const d = await denied(() => db.query(
+      `insert into public.contacts (owner_id, display_name, email) values ($1, 'Me', $2)`,
+      [anna, 'anna@test.com']));
+    check('a user cannot add themselves as a contact', d.denied, d.msg);
+  });
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 await db.end();
 await pg.stop();

@@ -52,33 +52,28 @@ export function useAddContact() {
     mutationFn: async (input: { name: string; email?: string; phone?: string }) => {
       if (!session?.user) throw new Error("You are not signed in.");
 
-      // Link the contact to their Pengio account when one exists, since that
-      // is what makes lending between the two possible. A contact with no
-      // account is still worth storing -- they may join later.
-      let contactUserId: string | null = null;
-      if (input.email?.trim()) {
-        const { data: match } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("email", input.email.trim().toLowerCase())
-          .maybeSingle();
-        contactUserId = match?.id ?? null;
-      }
-
-      const { error } = await supabase.from("contacts").insert({
-        owner_id: session.user.id,
-        contact_user_id: contactUserId,
-        display_name: input.name.trim(),
-        email: input.email?.trim().toLowerCase() || null,
-        phone: input.phone?.trim() || null,
-      });
+      // Linking happens in the database, not here. Looking the profile up from
+      // the client cannot work: row level security hides a profile until the
+      // two are connected, and connecting is what the lookup was for. The
+      // link_contact_to_account trigger resolves the email server-side, and
+      // the inserted row is read back to find out whether it matched.
+      const { data, error } = await supabase
+        .from("contacts")
+        .insert({
+          owner_id: session.user.id,
+          display_name: input.name.trim(),
+          email: input.email?.trim().toLowerCase() || null,
+          phone: input.phone?.trim() || null,
+        })
+        .select("contact_user_id")
+        .single();
 
       if (error) {
         if (error.code === "23505") throw new Error("That person is already in your contacts.");
         throw new Error(error.message);
       }
 
-      return { linked: contactUserId !== null };
+      return { linked: data.contact_user_id !== null };
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: contactsKey });
