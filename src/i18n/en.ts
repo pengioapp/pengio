@@ -28,7 +28,8 @@ const en = {
   "login.loginNow": "Login now",
   "login.noAccount": "Don't have an account?",
   "login.createOne": "Create one",
-  "login.invalidUser": "Invalid email. Try anna@test.com or erik@test.com",
+  "login.emailRequired": "Enter your email address.",
+  "login.passwordRequired": "Enter your password.",
 
   // Create Account
   "createAccount.title": "Create your account",

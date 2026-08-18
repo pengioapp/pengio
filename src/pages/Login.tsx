@@ -22,8 +22,15 @@ const Login = () => {
     e.preventDefault();
     if (submitting) return;
 
-    if (!email.trim() || !password) {
-      setError(t("login.invalidUser"));
+    // Reported separately. A single message covering both used to name two
+    // accounts from the prototype's hardcoded login, sending people off to
+    // sign in as users who no longer exist.
+    if (!email.trim()) {
+      setError(t("login.emailRequired"));
+      return;
+    }
+    if (!password) {
+      setError(t("login.passwordRequired"));
       return;
     }
 

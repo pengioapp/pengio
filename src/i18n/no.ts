@@ -28,7 +28,8 @@ const no = {
   "login.loginNow": "Logg inn nå",
   "login.noAccount": "Har du ikke en konto?",
   "login.createOne": "Opprett en",
-  "login.invalidUser": "Ugyldig e-post. Prøv anna@test.com eller erik@test.com",
+  "login.emailRequired": "Skriv inn e-postadressen din.",
+  "login.passwordRequired": "Skriv inn passordet ditt.",
 
   // Create Account
   "createAccount.title": "Opprett kontoen din",
