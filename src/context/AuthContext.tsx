@@ -36,6 +36,8 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<AuthResult>;
   signUp: (name: string, email: string, password: string) => Promise<AuthResult>;
+  requestPasswordReset: (email: string) => Promise<AuthResult>;
+  setPassword: (password: string) => Promise<AuthResult>;
   logout: () => Promise<void>;
   firstName: string;
   profile: ProfileData;
@@ -166,6 +168,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     []
   );
 
+  const requestPasswordReset = useCallback(async (email: string): Promise<AuthResult> => {
+    // redirectTo has to be on Supabase's allow list, so it is derived from
+    // wherever the app is actually running rather than hardcoded.
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    return { error: error ? humanise(error.message) : null };
+  }, []);
+
+  const setPassword = useCallback(async (password: string): Promise<AuthResult> => {
+    const { error } = await supabase.auth.updateUser({ password });
+    return { error: error ? humanise(error.message) : null };
+  }, []);
+
   const logout = useCallback(async () => {
     await supabase.auth.signOut();
   }, []);
@@ -206,7 +222,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, session, loading, signIn, signUp, logout, firstName, profile, updateProfile }}
+      value={{
+        user, session, loading, signIn, signUp, logout, firstName, profile,
+        updateProfile, requestPasswordReset, setPassword,
+      }}
     >
       {children}
     </AuthContext.Provider>

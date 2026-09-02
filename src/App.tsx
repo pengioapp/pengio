@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Splash from "./pages/Splash";
 import Login from "./pages/Login";
 import CreateAccount from "./pages/CreateAccount";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import HomePage from "./pages/HomePage";
 import BorrowMoney from "./pages/BorrowMoney";
@@ -46,6 +48,8 @@ const App = () => (
               <Route path="/" element={<Splash />} />
               <Route path="/login" element={<Login />} />
               <Route path="/create-account" element={<CreateAccount />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
               <Route path="/home" element={<RequireAuth><HomePage /></RequireAuth>} />
               <Route path="/borrow" element={<RequireAuth><BorrowMoney /></RequireAuth>} />

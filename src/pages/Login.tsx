@@ -85,6 +85,10 @@ const Login = () => {
             </div>
           </div>
 
+          <Link to="/forgot-password" className="text-body-small text-primary underline self-end -mt-2">
+            {t("login.forgotPassword")}
+          </Link>
+
           {error && <p className="text-destructive text-body-small text-center">{error}</p>}
           <div className="mt-auto pt-6 flex flex-col items-center gap-4">
             <button type="submit" disabled={submitting} className="w-full py-4 rounded-full bg-primary text-primary-foreground text-title font-bold hover:brightness-95 transition-all disabled:opacity-60">
