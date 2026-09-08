@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Users, Percent, ArrowUpRight } from "lucide-react";
-import BottomNav from "@/components/BottomNav";
 import { useTranslation } from "@/context/LanguageContext";
 import { formatDateString } from "@/lib/dateLocale";
 import { useLoans } from "@/hooks/useLoans";
@@ -145,7 +144,7 @@ const LoanSummary = () => {
       : 0;
 
   return (
-    <div className="flex flex-col min-h-screen bg-background pb-24">
+    <div className="flex flex-col min-h-screen bg-background pb-28">
       <div className="px-6 pt-8 pb-2 flex items-center relative">
         <button onClick={() => navigate(-1)} className="absolute left-4 p-2">
           <ArrowLeft className="w-6 h-6 text-foreground" />
@@ -220,8 +219,6 @@ const LoanSummary = () => {
           </>
         )}
       </div>
-
-      <BottomNav />
     </div>
   );
 };

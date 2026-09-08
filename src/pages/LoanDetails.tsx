@@ -73,7 +73,7 @@ const LoanDetails = () => {
   const progressPct = loan.totalDue > 0 ? Math.round((loan.repaid / loan.totalDue) * 100) : 0;
 
   return (
-    <div className="flex flex-col min-h-screen bg-background pb-8">
+    <div className="flex flex-col min-h-screen bg-background pb-28">
       <div className="px-6 pt-8 pb-2 flex items-center relative">
         <button
           onClick={() => navigate("/overview", fromTab ? { state: { tab: fromTab } } : undefined)}

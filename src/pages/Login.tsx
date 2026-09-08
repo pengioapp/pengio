@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { Lock, Search } from "lucide-react";
+import { Mail } from "lucide-react";
 import loginIllustration from "@/assets/login-illustration.png";
 import { useTranslation } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
+import PasswordField from "@/components/PasswordField";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -72,17 +73,19 @@ const Login = () => {
           <div>
             <label className="text-body-small text-foreground mb-2 block font-medium">{t("login.email")}</label>
             <div className="flex items-center gap-3 bg-secondary rounded-xl px-4 py-3.5">
-              <Search className="w-4 h-4 text-muted-foreground" />
+              <Mail className="w-4 h-4 text-muted-foreground" />
               <input type="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} placeholder={t("login.enterEmail")} className="flex-1 bg-transparent text-body-standard text-foreground placeholder:text-muted-foreground outline-none" />
             </div>
           </div>
 
           <div>
             <label className="text-body-small text-foreground mb-2 block font-medium">{t("login.password")}</label>
-            <div className="flex items-center gap-3 bg-secondary rounded-xl px-4 py-3.5">
-              <Search className="w-4 h-4 text-muted-foreground" />
-              <input type="password" autoComplete="current-password" value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }} placeholder={t("login.enterPassword")} className="flex-1 bg-transparent text-body-standard text-foreground placeholder:text-muted-foreground outline-none" />
-            </div>
+            <PasswordField
+              value={password}
+              onChange={(v) => { setPassword(v); setError(""); }}
+              placeholder={t("login.enterPassword")}
+              autoComplete="current-password"
+            />
           </div>
 
           <Link to="/forgot-password" className="text-body-small text-primary underline self-end -mt-2">

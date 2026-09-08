@@ -79,7 +79,7 @@ const LoanRequest = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background pb-28">
       <div className="px-6 pt-6 pb-4 flex items-center">
         <button onClick={() => navigate("/inbox")} className="w-10 h-10 rounded-full flex items-center justify-center text-foreground">
           <ArrowLeft className="w-5 h-5" />

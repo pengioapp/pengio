@@ -18,7 +18,7 @@ const AlertsSetting = () => {
   const handleToggle = (index: number) => setToggles((prev) => prev.map((v, i) => (i === index ? !v : v)));
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background pb-28">
       <div className="px-6 pt-8 pb-2 flex items-center relative">
         <button onClick={() => navigate("/profile")} className="absolute left-4 p-2"><ArrowLeft className="w-6 h-6 text-foreground" strokeWidth={1.5} /></button>
         <h1 className="text-title text-primary font-bold text-center w-full">{t("alertsSetting.title")}</h1>

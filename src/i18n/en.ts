@@ -386,6 +386,18 @@ const en = {
   // Repayment periods
   "period.2weeks": "2 weeks",
   "period.4weeks": "4 weeks",
+
+  // Password fields
+  "password.show": "Show password",
+  "password.hide": "Hide password",
+
+  // Notifications
+  "notifications.title": "Notifications",
+  "notifications.markAllRead": "Mark all read",
+  "notifications.new": "New",
+  "notifications.earlier": "Earlier",
+  "notifications.empty": "No notifications yet",
+  "notifications.gone": "There is nothing left to open here.",
 };
 
 export default en;

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Lock } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
+import PasswordField from "@/components/PasswordField";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -91,30 +91,20 @@ const ResetPassword = () => {
 
           <div>
             <label className="text-body-small text-foreground mb-2 block font-medium">{t("reset.password")}</label>
-            <div className="flex items-center gap-3 bg-secondary rounded-xl px-4 py-3.5">
-              <Lock className="w-4 h-4 text-muted-foreground" />
-              <input
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => { setPasswordValue(e.target.value); setError(""); }}
-                className="flex-1 bg-transparent text-body-standard text-foreground outline-none"
-              />
-            </div>
+            <PasswordField
+              value={password}
+              onChange={(v) => { setPasswordValue(v); setError(""); }}
+              autoComplete="new-password"
+            />
           </div>
 
           <div>
             <label className="text-body-small text-foreground mb-2 block font-medium">{t("reset.confirm")}</label>
-            <div className="flex items-center gap-3 bg-secondary rounded-xl px-4 py-3.5">
-              <Lock className="w-4 h-4 text-muted-foreground" />
-              <input
-                type="password"
-                autoComplete="new-password"
-                value={confirm}
-                onChange={(e) => { setConfirm(e.target.value); setError(""); }}
-                className="flex-1 bg-transparent text-body-standard text-foreground outline-none"
-              />
-            </div>
+            <PasswordField
+              value={confirm}
+              onChange={(v) => { setConfirm(v); setError(""); }}
+              autoComplete="new-password"
+            />
           </div>
 
           {error && <p className="text-destructive text-body-small text-center">{error}</p>}

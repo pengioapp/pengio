@@ -386,6 +386,18 @@ const no = {
   // Repayment periods
   "period.2weeks": "2 uker",
   "period.4weeks": "4 uker",
+
+  // Password fields
+  "password.show": "Vis passord",
+  "password.hide": "Skjul passord",
+
+  // Notifications
+  "notifications.title": "Varsler",
+  "notifications.markAllRead": "Merk alle som lest",
+  "notifications.new": "Nye",
+  "notifications.earlier": "Tidligere",
+  "notifications.empty": "Ingen varsler ennå",
+  "notifications.gone": "Det er ikke noe å åpne her lenger.",
 };
 
 export default no;

@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, CheckSquare, Square, User } from "lucide-react";
+import { Mail, CheckSquare, Square, User } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
+import PasswordField from "@/components/PasswordField";
 
 // Supabase's own minimum is 6, but these are accounts holding people's debt
 // records. Eight is still modest; it just rules out the worst.
@@ -100,18 +101,22 @@ const CreateAccount = () => {
 
           <div>
             <label className="text-body-small text-foreground mb-2 block">{t("createAccount.password")}</label>
-            <div className="flex items-center gap-3 bg-secondary rounded-xl px-4 py-3">
-              <Lock className="w-4 h-4 text-muted-foreground" />
-              <input type="password" autoComplete="new-password" value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }} placeholder={t("createAccount.enterPassword")} className="flex-1 bg-transparent text-body-standard text-foreground placeholder:text-muted-foreground outline-none" />
-            </div>
+            <PasswordField
+              value={password}
+              onChange={(v) => { setPassword(v); setError(""); }}
+              placeholder={t("createAccount.enterPassword")}
+              autoComplete="new-password"
+            />
           </div>
 
           <div>
             <label className="text-body-small text-foreground mb-2 block">{t("createAccount.confirmPassword")}</label>
-            <div className="flex items-center gap-3 bg-secondary rounded-xl px-4 py-3">
-              <Lock className="w-4 h-4 text-muted-foreground" />
-              <input type="password" autoComplete="new-password" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setError(""); }} placeholder={t("createAccount.reEnterPassword")} className="flex-1 bg-transparent text-body-standard text-foreground placeholder:text-muted-foreground outline-none" />
-            </div>
+            <PasswordField
+              value={confirmPassword}
+              onChange={(v) => { setConfirmPassword(v); setError(""); }}
+              placeholder={t("createAccount.reEnterPassword")}
+              autoComplete="new-password"
+            />
           </div>
 
           <button type="button" onClick={() => setTermsAccepted(!termsAccepted)} className="flex items-start gap-3 mt-1">

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Users, ShieldCheck, Bell, CalendarDays, LogOut, Trash2, ChevronRight, Globe, Mail, X } from "lucide-react";
-import BottomNav from "@/components/BottomNav";
 import { Drawer, DrawerContent, DrawerClose } from "@/components/ui/drawer";
 import { useTranslation } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
@@ -49,7 +48,7 @@ const Profile = () => {
   const languageLabel = language === "en" ? "English" : "Norsk (Bokmål)";
 
   return (
-    <div className="flex flex-col min-h-screen bg-background pb-24">
+    <div className="flex flex-col min-h-screen bg-background pb-28">
       <div className="px-6 pt-8 pb-2 flex items-center relative">
         <button onClick={() => navigate(-1)} className="absolute left-4 p-2"><ArrowLeft className="w-6 h-6 text-foreground" /></button>
         <h1 className="text-title text-primary font-bold text-center w-full">{t("profile.title")}</h1>
@@ -171,8 +170,6 @@ const Profile = () => {
           </div>
         </DrawerContent>
       </Drawer>
-
-      <BottomNav />
     </div>
   );
 };

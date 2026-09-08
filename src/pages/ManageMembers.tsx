@@ -27,7 +27,7 @@ const ManageMembers = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background pb-8">
+    <div className="flex flex-col min-h-screen bg-background pb-28">
       <div className="px-6 pt-8 pb-2 flex items-center relative">
         <button onClick={() => navigate(-1)} className="absolute left-4 p-2">
           <ArrowLeft className="w-6 h-6 text-foreground" />

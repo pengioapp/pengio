@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import BottomNav from "@/components/BottomNav";
 import { useProposals } from "@/hooks/useProposals";
 import { useTranslation } from "@/context/LanguageContext";
 import { formatDateString } from "@/lib/dateLocale";
@@ -77,7 +76,7 @@ const Inbox = () => {
   );
 
   return (
-    <div className="flex flex-col min-h-screen bg-background pb-20">
+    <div className="flex flex-col min-h-screen bg-background pb-28">
       <div className="px-6 pt-8 pb-4">
         <h1 className="text-title text-primary font-bold text-center">{t("inbox.title")}</h1>
       </div>
@@ -119,8 +118,6 @@ const Inbox = () => {
           </div>
         )}
       </div>
-
-      <BottomNav />
     </div>
   );
 };

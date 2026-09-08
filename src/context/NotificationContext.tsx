@@ -22,6 +22,9 @@ export interface Notification {
   timestamp: string;
   read: boolean;
   type: NotificationKind;
+  /** What the notification is about, so tapping it can open that thing. */
+  proposalId: string | null;
+  loanId: string | null;
 }
 
 const kindOf = (type: DbNotificationType): NotificationKind => {
@@ -68,7 +71,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     queryFn: async (): Promise<Notification[]> => {
       const { data, error } = await supabase
         .from("notifications")
-        .select("id, type, title, body, read_at, created_at")
+        .select("id, type, title, body, read_at, created_at, proposal_id, loan_id")
         .order("created_at", { ascending: false })
         .limit(50);
 
@@ -81,6 +84,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         timestamp: row.created_at,
         read: row.read_at !== null,
         type: kindOf(row.type),
+        proposalId: row.proposal_id,
+        loanId: row.loan_id,
       }));
     },
   });

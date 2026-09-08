@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
+import AppLayout from "@/components/AppLayout";
 
 /**
  * Gates a route behind a signed-in session.
@@ -33,7 +34,7 @@ const RequireAuth = ({ children }: { children: ReactNode }) => {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
-  return <>{children}</>;
+  return <AppLayout>{children}</AppLayout>;
 };
 
 export default RequireAuth;

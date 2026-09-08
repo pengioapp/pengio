@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Bell, ArrowDownLeft, ArrowUpRight, Coins, Clock } from "lucide-react";
-import BottomNav from "@/components/BottomNav";
+import { Bell, ArrowDownLeft, ArrowUpRight, Coins, Clock, ChevronRight } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { useNotifications } from "@/context/NotificationContext";
@@ -14,7 +13,12 @@ interface ActivityItem {
   text: string;
   time: string;
   icon: typeof ArrowUpRight;
-  loanId?: string;
+  /**
+   * Where tapping the row goes. Rows used to carry a loanId and navigate only
+   * when it was set, so pending requests -- the rows most likely to be tapped,
+   * because they are the ones waiting on an answer -- did nothing at all.
+   */
+  open?: () => void;
 }
 
 const HomePage = () => {
@@ -56,7 +60,7 @@ const HomePage = () => {
           }),
     time: formatDateString(loan.agreedAt, language),
     icon: loan.role === "lender" ? ArrowUpRight : ArrowDownLeft,
-    loanId: loan.id,
+    open: () => navigate("/loan-details", { state: { loanId: loan.id } }),
   }));
 
   const pendingActivity: ActivityItem[] = (proposals ?? [])
@@ -76,13 +80,15 @@ const HomePage = () => {
             }),
       time: formatDateString(p.createdAt, language),
       icon: Clock,
+      // Requests and offers are answered on different screens.
+      open: () => navigate(p.kind === "request" ? `/inbox/${p.id}` : `/loan-request/${p.id}`),
     }));
 
   const activity = [...pendingActivity, ...loanActivity].slice(0, 8);
   const isLoading = loansLoading || proposalsLoading;
 
   return (
-    <div className="flex flex-col min-h-screen bg-background pb-20">
+    <div className="flex flex-col min-h-screen bg-background pb-28">
       <div className="px-6 pt-8 pb-4 flex items-start justify-between">
         <h1 className="text-h4 text-primary font-bold">{greeting}</h1>
         <button onClick={() => navigate("/notifications")} className="w-10 h-10 rounded-full flex items-center justify-center text-primary relative">
@@ -151,10 +157,11 @@ const HomePage = () => {
 
         <div className="flex flex-col gap-3">
           {activity.map((item) => (
-            <div
+            <button
               key={item.key}
-              onClick={() => item.loanId && navigate("/loan-details", { state: { loanId: item.loanId } })}
-              className={`bg-secondary rounded-xl p-4 flex items-center gap-3 transition-opacity ${item.loanId ? "cursor-pointer active:opacity-80" : ""}`}
+              type="button"
+              onClick={item.open}
+              className="w-full text-left bg-secondary rounded-xl p-4 flex items-center gap-3 transition-opacity active:opacity-80"
             >
               <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                 <item.icon className="w-5 h-5 text-primary" />
@@ -163,12 +170,11 @@ const HomePage = () => {
                 <p className="text-body-small font-medium text-foreground">{item.text}</p>
                 <p className="text-body-micro text-muted-foreground">{item.time}</p>
               </div>
-            </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
+            </button>
           ))}
         </div>
       </div>
-
-      <BottomNav />
     </div>
   );
 };
