@@ -15,7 +15,7 @@ const Profile = () => {
   const [showLanguagePicker, setShowLanguagePicker] = useState(false);
 
   const settingsItems = [
-    { icon: Users, label: t("profile.manageFamily"), route: "/manage-members" },
+    { icon: Users, label: t("profile.manageContacts"), route: "/manage-members" },
     { icon: ShieldCheck, label: t("profile.loginSecurity"), route: "/login-security" },
     { icon: Bell, label: t("profile.alerts"), subtitle: t("profile.alertsSubtitle"), route: "/alerts-setting" },
     { icon: CalendarDays, label: t("profile.upcomingPayments"), route: "/upcoming-payments" },

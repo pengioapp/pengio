@@ -211,7 +211,7 @@ const no = {
   // Profile
   "profile.title": "Profil og innstillinger",
   "profile.editPersonalInfo": "Rediger personlig info",
-  "profile.manageFamily": "Administrer familiemedlemmer",
+  "profile.manageContacts": "Administrer kontakter",
   "profile.loginSecurity": "Innlogging og sikkerhet",
   "profile.alerts": "Varsler",
   "profile.alertsSubtitle": "Administrer betalingspåminnelser",
@@ -266,27 +266,20 @@ const no = {
   "editInfo.enterAge": "Skriv inn alder",
   "editInfo.enterProfession": "Skriv inn yrke",
 
-  // Manage Members
-  "members.title": "Administrer medlemmer",
-  "members.subtitle": "Administrer familiemedlemmer koblet til Pengio-kontoen din.",
-  "members.currentMembers": "Nåværende familiemedlemmer",
+  // Contacts
+  "members.title": "Kontakter",
+  "members.subtitle": "Personer du kan l\u00e5ne ut til og l\u00e5ne fra. Familie, venner, hvem du enn stoler p\u00e5.",
+  "members.currentMembers": "Kontaktene dine",
   "members.empty": "Ingen kontakter enn\u00e5. Legg til noen for \u00e5 komme i gang.",
   "members.remove": "Fjern",
   "members.removed": "{name} fjernet fra kontaktene dine",
-  "members.addNew": "+ Legg til nytt medlem",
+  "members.addNew": "+ Legg til kontakt",
 
-  // Add Member
-  "addMember.title": "Legg til nytt medlem",
-  "addMember.subtitle": "Inviter et familiemedlem til Pengio-kontoen din.",
+  // Add contact
+  "addMember.title": "Legg til kontakt",
+  "addMember.subtitle": "Legg til noen du stoler p\u00e5. De m\u00e5 ha en Pengio-konto f\u00f8r dere kan l\u00e5ne til eller fra hverandre.",
   "addMember.fullName": "Fullt navn",
   "addMember.phoneNumber": "Telefonnummer",
-  "addMember.relationship": "Relasjon (valgfritt)",
-  "addMember.parent": "Forelder",
-  "addMember.sibling": "Søsken",
-  "addMember.spouse": "Ektefelle",
-  "addMember.child": "Barn",
-  "addMember.other": "Annet",
-  "addMember.smsInfo": "En SMS-invitasjon vil bli sendt til dette nummeret.",
   "addMember.email": "E-postadresse",
   "addMember.emailInfo": "Vi bruker e-postadressen til \u00e5 koble dere sammen p\u00e5 Pengio. Den m\u00e5 v\u00e6re den samme som de registrerte seg med.",
   "addMember.notOnPengio": "Ikke p\u00e5 Pengio enn\u00e5",
@@ -295,7 +288,6 @@ const no = {
   "addMember.save": "Legg til kontakt",
   "addMember.nameRequired": "Skriv inn et navn.",
   "addMember.emailRequired": "Skriv inn en e-postadresse.",
-  "addMember.sendInvitation": "Send invitasjon",
 
   // Login Security
   "loginSecurity.title": "Innlogging og sikkerhet",
@@ -306,6 +298,11 @@ const no = {
   "loginSecurity.confirmPassword": "Bekreft passord",
   "loginSecurity.reEnterNewPassword": "Skriv inn nytt passord igjen",
   "loginSecurity.savePassword": "Lagre passord",
+  "loginSecurity.saved": "Passordet er oppdatert.",
+  "loginSecurity.currentRequired": "Skriv inn ditt nåværende passord.",
+  "loginSecurity.wrongCurrentPassword": "Dette er ikke ditt nåværende passord.",
+  "loginSecurity.mismatch": "De to passordene er ikke like.",
+  "loginSecurity.tooShort": "Passordet må være minst 8 tegn.",
 
   // Alerts Setting
   "alertsSetting.title": "Varselinnstillinger",

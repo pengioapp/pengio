@@ -211,7 +211,7 @@ const en = {
   // Profile
   "profile.title": "Profile & settings",
   "profile.editPersonalInfo": "Edit personal info",
-  "profile.manageFamily": "Manage family members",
+  "profile.manageContacts": "Manage contacts",
   "profile.loginSecurity": "Login & Security",
   "profile.alerts": "Alerts",
   "profile.alertsSubtitle": "Manage payment reminders",
@@ -266,27 +266,20 @@ const en = {
   "editInfo.enterAge": "Enter age",
   "editInfo.enterProfession": "Enter your profession",
 
-  // Manage Members
-  "members.title": "Manage members",
-  "members.subtitle": "Manage family members linked to your Pengio account.",
-  "members.currentMembers": "Current family members",
+  // Contacts
+  "members.title": "Contacts",
+  "members.subtitle": "People you can lend to and borrow from. Family, friends, whoever you trust.",
+  "members.currentMembers": "Your contacts",
   "members.empty": "No contacts yet. Add someone to start lending.",
   "members.remove": "Remove",
   "members.removed": "{name} removed from your contacts",
-  "members.addNew": "+ Add new member",
+  "members.addNew": "+ Add contact",
 
-  // Add Member
-  "addMember.title": "Add new member",
-  "addMember.subtitle": "Invite a family member to join your Pengio account.",
+  // Add contact
+  "addMember.title": "Add contact",
+  "addMember.subtitle": "Add someone you trust. They need a Pengio account before you can lend to or borrow from each other.",
   "addMember.fullName": "Full name",
   "addMember.phoneNumber": "Phone number",
-  "addMember.relationship": "Relationship (optional)",
-  "addMember.parent": "Parent",
-  "addMember.sibling": "Sibling",
-  "addMember.spouse": "Spouse",
-  "addMember.child": "Child",
-  "addMember.other": "Other",
-  "addMember.smsInfo": "An SMS invitation will be sent to this number.",
   "addMember.email": "Email address",
   "addMember.emailInfo": "We use the email address to connect you on Pengio. It must match the one they signed up with.",
   "addMember.notOnPengio": "Not on Pengio yet",
@@ -295,7 +288,6 @@ const en = {
   "addMember.save": "Add contact",
   "addMember.nameRequired": "Enter a name.",
   "addMember.emailRequired": "Enter an email address.",
-  "addMember.sendInvitation": "Send invitation",
 
   // Login Security
   "loginSecurity.title": "Login & security",
@@ -306,6 +298,11 @@ const en = {
   "loginSecurity.confirmPassword": "Confirm password",
   "loginSecurity.reEnterNewPassword": "Re-Enter new password",
   "loginSecurity.savePassword": "Save password",
+  "loginSecurity.saved": "Password updated.",
+  "loginSecurity.currentRequired": "Enter your current password.",
+  "loginSecurity.wrongCurrentPassword": "That is not your current password.",
+  "loginSecurity.mismatch": "The two passwords do not match.",
+  "loginSecurity.tooShort": "Password must be at least 8 characters.",
 
   // Alerts Setting
   "alertsSetting.title": "Alerts setting",
