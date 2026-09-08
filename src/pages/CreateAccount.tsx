@@ -126,13 +126,13 @@ const CreateAccount = () => {
 
           {error && <p className="text-destructive text-body-small text-center">{error}</p>}
 
+          {/* "Create account with Vipps" sat here with no handler at all. Vipps
+              Login is planned but out of the MVP, and a button that does
+              nothing in front of real testers is worse than no button. It goes
+              back when there is a merchant account behind it. */}
           <div className="mt-auto pt-4 flex flex-col gap-3">
             <button type="submit" disabled={submitting} className="w-full py-4 rounded-full bg-primary text-primary-foreground text-title font-bold hover:brightness-95 transition-all disabled:opacity-60">
               {submitting ? "…" : t("createAccount.create")}
-            </button>
-            <p className="text-body-micro text-muted-foreground text-center">{t("createAccount.or")}</p>
-            <button type="button" className="w-full py-4 rounded-full border-2 border-primary text-primary text-title font-bold hover:bg-primary/10 transition-all">
-              {t("createAccount.vipps")}
             </button>
           </div>
         </form>

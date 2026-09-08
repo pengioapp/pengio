@@ -388,6 +388,8 @@ const no = {
   "password.show": "Vis passord",
   "password.hide": "Skjul passord",
 
+  "common.ok": "OK",
+
   // Notifications
   "notifications.title": "Varsler",
   "notifications.markAllRead": "Merk alle som lest",

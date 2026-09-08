@@ -65,7 +65,7 @@ export function useAddContact() {
           email: input.email?.trim().toLowerCase() || null,
           phone: input.phone?.trim() || null,
         })
-        .select("contact_user_id")
+        .select("id, contact_user_id, display_name, phone, email")
         .single();
 
       if (error) {
@@ -73,7 +73,19 @@ export function useAddContact() {
         throw new Error(error.message);
       }
 
-      return { linked: data.contact_user_id !== null };
+      // The whole contact comes back, not just whether it linked, so a caller
+      // adding someone mid-flow can select them without a round trip.
+      const contact: Contact = {
+        id: data.id,
+        userId: data.contact_user_id,
+        name: data.display_name,
+        initials: initialsOf(data.display_name),
+        phone: data.phone,
+        email: data.email,
+        onPengio: data.contact_user_id !== null,
+      };
+
+      return { linked: contact.onPengio, contact };
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: contactsKey });

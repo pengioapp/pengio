@@ -388,6 +388,8 @@ const en = {
   "password.show": "Show password",
   "password.hide": "Hide password",
 
+  "common.ok": "OK",
+
   // Notifications
   "notifications.title": "Notifications",
   "notifications.markAllRead": "Mark all read",

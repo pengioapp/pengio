@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Search, UserPlus } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 import { useContacts, type Contact } from "@/hooks/useContacts";
+import AddContactDialog from "@/components/AddContactDialog";
 
 const avatarColors = [
   "bg-pengio-green",
@@ -25,12 +25,15 @@ interface Props {
  * Contacts without a Pengio account are shown but not selectable: the database
  * requires both parties to be registered and connected before a proposal can
  * exist, so offering them as options would only produce a rejected insert.
+ *
+ * Adding someone happens in a dialog rather than on its own screen. Navigating
+ * away discarded whatever had already been typed into the loan form behind it.
  */
 const ContactPicker = ({ selected, onSelect, placeholder, searchPlaceholder }: Props) => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const { data: contacts, isLoading } = useContacts();
   const [open, setOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
   const [query, setQuery] = useState("");
 
   const normalised = query.trim().toLowerCase();
@@ -116,7 +119,7 @@ const ContactPicker = ({ selected, onSelect, placeholder, searchPlaceholder }: P
             ))}
 
             <button
-              onClick={() => navigate("/add-member")}
+              onClick={() => { setOpen(false); setAdding(true); }}
               className="flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-background/20 transition-colors text-primary"
             >
               <UserPlus className="w-5 h-5" />
@@ -125,6 +128,16 @@ const ContactPicker = ({ selected, onSelect, placeholder, searchPlaceholder }: P
           </div>
         </div>
       )}
+
+      <AddContactDialog
+        open={adding}
+        onOpenChange={setAdding}
+        onAdded={(contact) => {
+          // Straight into the slot they were trying to fill.
+          onSelect(contact);
+          setQuery("");
+        }}
+      />
     </div>
   );
 };
