@@ -277,7 +277,7 @@ const no = {
 
   // Add contact
   "addMember.title": "Legg til kontakt",
-  "addMember.subtitle": "Legg til noen du stoler p\u00e5. De m\u00e5 ha en Pengio-konto f\u00f8r dere kan l\u00e5ne til eller fra hverandre.",
+  "addMember.subtitle": "Inviter en venn eller et familiemedlem. De m\u00e5 ha en Pengio-konto f\u00f8r dere kan l\u00e5ne til eller fra hverandre.",
   "addMember.fullName": "Fullt navn",
   "addMember.phoneNumber": "Telefonnummer",
   "addMember.email": "E-postadresse",

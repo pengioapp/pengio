@@ -277,7 +277,7 @@ const en = {
 
   // Add contact
   "addMember.title": "Add contact",
-  "addMember.subtitle": "Add someone you trust. They need a Pengio account before you can lend to or borrow from each other.",
+  "addMember.subtitle": "Invite a friend or family member. They need a Pengio account before you can lend to or borrow from each other.",
   "addMember.fullName": "Full name",
   "addMember.phoneNumber": "Phone number",
   "addMember.email": "Email address",
