@@ -1,0 +1,68 @@
+name: Deploy to GitHub Pages
+
+# Every push to main goes live. Deploying by hand is what left testers looking
+# at expired links for days at a time.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# A queued deploy should wait for the one in flight rather than cancelling it,
+# so main and the live site cannot end up disagreeing.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Catches a broken build before it reaches anyone, which the manual
+      # deploys never did.
+      - run: npx tsc --noEmit
+      - run: npx vitest run
+
+      - run: npm run build
+        env:
+          # Project sites live under /<repo>/, not the domain root.
+          VITE_BASE_PATH: /pengio/
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
+
+      # Pages has no rewrite rules, so a deep link like /loan-details would
+      # 404 before React Router ever loaded. Serving the same document as the
+      # 404 page hands those URLs to the client-side router instead.
+      - run: cp dist/index.html dist/404.html
+
+      # Without this, Pages runs the output through Jekyll, which silently
+      # drops files and folders beginning with an underscore.
+      - run: touch dist/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

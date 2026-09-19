@@ -40,7 +40,10 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      {/* Vite sets BASE_URL from the build's base path, so the router stays
+          correct whether the app is served from the domain root or from
+          /pengio/ on GitHub Pages. */}
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <LanguageProvider>
           <AuthProvider>
             <NotificationProvider>
