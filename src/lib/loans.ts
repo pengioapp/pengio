@@ -131,3 +131,35 @@ export const formatAmount = (amount: number, currency = "NOK"): string =>
     currency,
     maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
   }).format(amount);
+
+/**
+ * How a repayment date should read to someone looking at it today.
+ *
+ * Testers found the repayment view hard to follow, and a bare date is part of
+ * why: "15 October" does not say whether that is a comfortable three weeks off
+ * or a week overdue. Days are compared at midnight local time, so a loan due
+ * today reads "due today" all day rather than flipping to overdue at noon.
+ */
+export type DueState =
+  | { kind: "overdue"; days: number }
+  | { kind: "today" }
+  | { kind: "soon"; days: number }
+  | { kind: "later" };
+
+/** Anything inside a week is worth drawing attention to. */
+const SOON_DAYS = 7;
+
+export const dueState = (repaymentDate: string, now = new Date()): DueState => {
+  const due = new Date(`${repaymentDate}T00:00:00`);
+  if (Number.isNaN(due.getTime())) return { kind: "later" };
+
+  const midnightToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const midnightDue = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+
+  const days = Math.round((midnightDue.getTime() - midnightToday.getTime()) / 86_400_000);
+
+  if (days < 0) return { kind: "overdue", days: -days };
+  if (days === 0) return { kind: "today" };
+  if (days <= SOON_DAYS) return { kind: "soon", days };
+  return { kind: "later" };
+};
