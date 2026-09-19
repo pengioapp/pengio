@@ -1,17 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileText, Coins, CalendarDays, CheckCircle2, ChevronLeft, Pencil } from "lucide-react";
+import { FileText, Coins, CheckCircle2, ChevronLeft, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { formatDate, getDateLocale } from "@/lib/dateLocale";
+import { formatDate } from "@/lib/dateLocale";
 import { useTranslation } from "@/context/LanguageContext";
 import { useCreateProposal } from "@/hooks/useProposals";
 import type { Contact } from "@/hooks/useContacts";
 import ContactPicker from "@/components/ContactPicker";
 import { totalDue, formatAmount } from "@/lib/loans";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import DateField from "@/components/DateField";
 
 interface Props {
   /** "borrow" asks someone for money; "lend" offers it. */
@@ -193,27 +192,7 @@ const ProposalWizard = ({ direction, presetAmounts }: Props) => {
 
         {step === "date" && (
           <Question title={t("lend.repaymentPeriod")}>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="w-full bg-secondary rounded-xl px-4 py-3.5 flex items-center gap-3">
-                  <CalendarDays className="w-5 h-5 text-muted-foreground" />
-                  <span className={`flex-1 text-left text-body-standard ${repaymentDate ? "text-foreground" : "text-muted-foreground"}`}>
-                    {repaymentDate ? formatDate(repaymentDate, language) : t("lend.selectDate")}
-                  </span>
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={repaymentDate}
-                  onSelect={setRepaymentDate}
-                  disabled={(date) => date <= new Date()}
-                  locale={getDateLocale(language)}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
+            <DateField value={repaymentDate} onChange={setRepaymentDate} />
           </Question>
         )}
 

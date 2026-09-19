@@ -6,10 +6,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import DateField from "@/components/DateField";
 import { useTranslation } from "@/context/LanguageContext";
-import { formatDate, getDateLocale } from "@/lib/dateLocale";
 import { useCounterProposal } from "@/hooks/useProposals";
 import { totalDue, formatAmount, type Proposal } from "@/lib/loans";
 
@@ -28,7 +26,7 @@ interface Props {
  * changed rather than starting blank.
  */
 const CounterDialog = ({ proposal, open, onOpenChange, onCountered }: Props) => {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const counter = useCounterProposal();
 
   const [amount, setAmount] = useState(String(proposal.amount));
@@ -107,24 +105,12 @@ const CounterDialog = ({ proposal, open, onOpenChange, onCountered }: Props) => 
 
           <div className="flex flex-col gap-1">
             <span className="text-body-micro text-muted-foreground">{t("counter.date")}</span>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="bg-background/30 rounded-lg px-3 py-2.5 text-sm text-foreground text-left">
-                  {date ? formatDate(date, language) : t("lend.selectDate")}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={(d) => { setDate(d); setError(""); }}
-                  disabled={(d) => d <= new Date()}
-                  locale={getDateLocale(language)}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
+            <DateField
+              value={date}
+              onChange={(d) => { setDate(d); setError(""); }}
+              triggerClassName="bg-background/30 rounded-lg px-3 py-2.5 text-sm text-foreground text-left flex items-center"
+              showIcon={false}
+            />
           </div>
 
           <Textarea
