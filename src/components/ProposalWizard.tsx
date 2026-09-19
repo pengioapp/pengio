@@ -116,8 +116,12 @@ const ProposalWizard = ({ direction, presetAmounts }: Props) => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background pb-28">
-      <div className="px-6 pt-6 pb-2 flex items-center">
+    /* h-dvh, not min-h-screen: iOS Safari counts the area behind its own
+       toolbars in 100vh, so a screen-height page is taller than what is
+       actually visible and the buttons at its foot sit below the fold. The
+       dynamic viewport unit measures what the user can really see. */
+    <div className="flex flex-col h-dvh bg-background">
+      <div className="shrink-0 px-6 pt-6 pb-2 flex items-center">
         <button onClick={goBack} className="w-10 h-10 rounded-full flex items-center justify-center text-foreground" aria-label={t("wizard.back")}>
           <ChevronLeft className="w-6 h-6" />
         </button>
@@ -128,7 +132,7 @@ const ProposalWizard = ({ direction, presetAmounts }: Props) => {
 
       {/* Knowing how many questions are left is most of what the scrolling
           form failed to convey. */}
-      <div className="px-6 mb-6">
+      <div className="shrink-0 px-6 mb-6">
         <div className="flex gap-1.5 mb-2">
           {STEPS.map((s, i) => (
             <div
@@ -142,7 +146,10 @@ const ProposalWizard = ({ direction, presetAmounts }: Props) => {
         </p>
       </div>
 
-      <div className="flex-1 px-6 flex flex-col">
+      {/* Only the question scrolls. min-h-0 is what lets a flex child shrink
+          below its content and actually scroll instead of pushing the footer
+          off the screen. */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-6">
         {step === "amount" && (
           <Question title={t(isBorrow ? "borrow.howMuch" : "lend.howMuch")}>
             <div className="bg-secondary rounded-xl px-4 py-3.5 flex items-center gap-3 mb-3">
@@ -291,30 +298,38 @@ const ProposalWizard = ({ direction, presetAmounts }: Props) => {
           </Question>
         )}
 
-        <div className="mt-auto pt-6 flex gap-3">
+      </div>
+
+      {/* Outside the scrolling area, so Back and Next are on screen whatever
+          the question above is doing. The bottom padding clears the floating
+          navigation bar and the iPhone home indicator; without it the buttons
+          sit underneath both. */}
+      <div
+        className="shrink-0 px-6 pt-4 flex gap-3 bg-background"
+        style={{ paddingBottom: "calc(6rem + env(safe-area-inset-bottom))" }}
+      >
+        <button
+          onClick={goBack}
+          className="px-6 py-4 rounded-full bg-secondary text-foreground text-body-standard font-bold"
+        >
+          {t("wizard.back")}
+        </button>
+        {step === "review" ? (
           <button
-            onClick={goBack}
-            className="px-6 py-4 rounded-full bg-secondary text-foreground text-body-standard font-bold"
+            onClick={handleSend}
+            disabled={createProposal.isPending}
+            className="flex-1 py-4 rounded-full bg-primary text-primary-foreground text-title font-bold hover:brightness-95 transition-all disabled:opacity-60"
           >
-            {t("wizard.back")}
+            {createProposal.isPending ? "…" : t(isBorrow ? "borrow.sendRequest" : "lend.sendOffer")}
           </button>
-          {step === "review" ? (
-            <button
-              onClick={handleSend}
-              disabled={createProposal.isPending}
-              className="flex-1 py-4 rounded-full bg-primary text-primary-foreground text-title font-bold hover:brightness-95 transition-all disabled:opacity-60"
-            >
-              {createProposal.isPending ? "…" : t(isBorrow ? "borrow.sendRequest" : "lend.sendOffer")}
-            </button>
-          ) : (
-            <button
-              onClick={goNext}
-              className="flex-1 py-4 rounded-full bg-primary text-primary-foreground text-title font-bold hover:brightness-95 transition-all"
-            >
-              {t("wizard.next")}
-            </button>
-          )}
-        </div>
+        ) : (
+          <button
+            onClick={goNext}
+            className="flex-1 py-4 rounded-full bg-primary text-primary-foreground text-title font-bold hover:brightness-95 transition-all"
+          >
+            {t("wizard.next")}
+          </button>
+        )}
       </div>
 
       <Dialog open={showSuccess}>
