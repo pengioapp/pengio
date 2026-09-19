@@ -5,7 +5,7 @@
 --   proposal_status 'countered'    EXISTS
 --   counter_proposal()             MISSING   <-- this file
 --
--- That is why testers reported «"Counter"-funksjonaliteten fungerer ikke».
+-- That is why testers reported "Counter-funksjonaliteten fungerer ikke".
 -- The whole frontend for it shipped; the button calls an RPC that is not there
 -- and gets back a 404. Nothing else is wrong with the feature.
 --
@@ -23,7 +23,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = public
-as $$
+as $notify$
 declare
   initiator_name text;
 begin
@@ -55,7 +55,7 @@ begin
 
   return new;
 end;
-$$;
+$notify$;
 
 -- ---------------------------------------------------------------------------
 -- counter_proposal
@@ -78,7 +78,7 @@ returns uuid
 language plpgsql
 security definer
 set search_path = public
-as $$
+as $counter$
 declare
   p public.loan_proposals;
   new_id uuid;
@@ -132,7 +132,7 @@ begin
 
   return new_id;
 end;
-$$;
+$counter$;
 
 revoke all on function public.counter_proposal(uuid, numeric, numeric, date, text, text) from public;
 grant execute on function public.counter_proposal(uuid, numeric, numeric, date, text, text) to authenticated;
