@@ -8,6 +8,7 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { appUrl } from "@/lib/appUrl";
 
 export interface ProfileData {
   fullName: string;
@@ -170,9 +171,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const requestPasswordReset = useCallback(async (email: string): Promise<AuthResult> => {
     // redirectTo has to be on Supabase's allow list, so it is derived from
-    // wherever the app is actually running rather than hardcoded.
+    // wherever the app is actually running rather than hardcoded. appUrl adds
+    // the base path: origin alone drops it, which sent reset links to a 404
+    // one directory above the app on GitHub Pages.
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: appUrl("reset-password"),
     });
     return { error: error ? humanise(error.message) : null };
   }, []);
