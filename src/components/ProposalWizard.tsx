@@ -116,11 +116,14 @@ const ProposalWizard = ({ direction, presetAmounts }: Props) => {
   };
 
   return (
-    /* h-dvh, not min-h-screen: iOS Safari counts the area behind its own
-       toolbars in 100vh, so a screen-height page is taller than what is
-       actually visible and the buttons at its foot sit below the fold. The
-       dynamic viewport unit measures what the user can really see. */
-    <div className="flex flex-col h-dvh bg-background">
+    /* dvh, not vh: iOS Safari counts the area behind its own toolbars in
+       100vh, so a screen-height page is taller than what can actually be seen
+       and anything at its foot lands below the fold. The dynamic viewport
+       unit measures what the user really sees.
+
+       min-h rather than h, so a question with a lot in it can grow and scroll
+       normally. Short questions still end with the buttons on screen. */
+    <div className="flex flex-col min-h-dvh bg-background">
       <div className="shrink-0 px-6 pt-6 pb-2 flex items-center">
         <button onClick={goBack} className="w-10 h-10 rounded-full flex items-center justify-center text-foreground" aria-label={t("wizard.back")}>
           <ChevronLeft className="w-6 h-6" />
@@ -146,10 +149,7 @@ const ProposalWizard = ({ direction, presetAmounts }: Props) => {
         </p>
       </div>
 
-      {/* Only the question scrolls. min-h-0 is what lets a flex child shrink
-          below its content and actually scroll instead of pushing the footer
-          off the screen. */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-6">
+      <div className="flex-1 px-6 flex flex-col">
         {step === "amount" && (
           <Question title={t(isBorrow ? "borrow.howMuch" : "lend.howMuch")}>
             <div className="bg-secondary rounded-xl px-4 py-3.5 flex items-center gap-3 mb-3">
@@ -298,38 +298,37 @@ const ProposalWizard = ({ direction, presetAmounts }: Props) => {
           </Question>
         )}
 
-      </div>
-
-      {/* Outside the scrolling area, so Back and Next are on screen whatever
-          the question above is doing. The bottom padding clears the floating
-          navigation bar and the iPhone home indicator; without it the buttons
-          sit underneath both. */}
-      <div
-        className="shrink-0 px-6 pt-4 flex gap-3 bg-background"
-        style={{ paddingBottom: "calc(6rem + env(safe-area-inset-bottom))" }}
-      >
-        <button
-          onClick={goBack}
-          className="px-6 py-4 rounded-full bg-secondary text-foreground text-body-standard font-bold"
+        {/* mt-auto pins these to the bottom when the question is short, so
+            they are on screen without scrolling. A long question pushes them
+            down and the page scrolls to them, which is the expected way round.
+            The padding clears the floating nav bar and the home indicator. */}
+        <div
+          className="mt-auto pt-6 flex gap-3"
+          style={{ paddingBottom: "calc(6rem + env(safe-area-inset-bottom))" }}
         >
-          {t("wizard.back")}
-        </button>
-        {step === "review" ? (
           <button
-            onClick={handleSend}
-            disabled={createProposal.isPending}
-            className="flex-1 py-4 rounded-full bg-primary text-primary-foreground text-title font-bold hover:brightness-95 transition-all disabled:opacity-60"
+            onClick={goBack}
+            className="px-6 py-4 rounded-full bg-secondary text-foreground text-body-standard font-bold"
           >
-            {createProposal.isPending ? "…" : t(isBorrow ? "borrow.sendRequest" : "lend.sendOffer")}
+            {t("wizard.back")}
           </button>
-        ) : (
-          <button
-            onClick={goNext}
-            className="flex-1 py-4 rounded-full bg-primary text-primary-foreground text-title font-bold hover:brightness-95 transition-all"
-          >
-            {t("wizard.next")}
-          </button>
-        )}
+          {step === "review" ? (
+            <button
+              onClick={handleSend}
+              disabled={createProposal.isPending}
+              className="flex-1 py-4 rounded-full bg-primary text-primary-foreground text-title font-bold hover:brightness-95 transition-all disabled:opacity-60"
+            >
+              {createProposal.isPending ? "…" : t(isBorrow ? "borrow.sendRequest" : "lend.sendOffer")}
+            </button>
+          ) : (
+            <button
+              onClick={goNext}
+              className="flex-1 py-4 rounded-full bg-primary text-primary-foreground text-title font-bold hover:brightness-95 transition-all"
+            >
+              {t("wizard.next")}
+            </button>
+          )}
+        </div>
       </div>
 
       <Dialog open={showSuccess}>
