@@ -154,7 +154,9 @@ const ProposalWizard = ({ direction, presetAmounts }: Props) => {
           <Question title={t(isBorrow ? "borrow.howMuch" : "lend.howMuch")}>
             <div className="bg-secondary rounded-xl px-4 py-3.5 flex items-center gap-3 mb-3">
               <Coins className="w-5 h-5 text-muted-foreground" />
-              <div className="flex-1 flex items-center">
+              {/* nowrap: the unit belongs to the number. Four digits or
+                  more was enough to push "kr" onto its own line. */}
+              <div className="flex-1 flex items-center whitespace-nowrap">
                 <input
                   type="text"
                   inputMode="numeric"
@@ -165,7 +167,7 @@ const ProposalWizard = ({ direction, presetAmounts }: Props) => {
                   placeholder="0"
                   style={{ width: `${Math.max(1, amount.length)}ch` }}
                 />
-                <span className="text-body-standard text-muted-foreground ml-2">kr</span>
+                <span className="text-body-standard text-muted-foreground ml-2 shrink-0">kr</span>
               </div>
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -173,7 +175,7 @@ const ProposalWizard = ({ direction, presetAmounts }: Props) => {
                 <button
                   key={val}
                   onClick={() => setAmount(String(val))}
-                  className={`px-3 py-1.5 rounded-full text-body-small font-medium border transition-all ${
+                  className={`px-3 py-1.5 rounded-full text-body-small font-medium border transition-all whitespace-nowrap ${
                     amountValue === val
                       ? "bg-primary text-primary-foreground border-primary"
                       : "bg-transparent text-primary border-primary/50 hover:border-primary"
@@ -220,7 +222,7 @@ const ProposalWizard = ({ direction, presetAmounts }: Props) => {
                 onChange={(e) => {
                   const val = e.target.value.replace(/[^0-9]/g, "");
                   if (val === "") setInterestRate("");
-                  else if (parseInt(val, 10) <= 10) setInterestRate(String(parseInt(val, 10)));
+                  else if (parseInt(val, 10) <= 100) setInterestRate(String(parseInt(val, 10)));
                 }}
                 placeholder={t("borrow.enterInterestRate")}
                 className="bg-transparent text-body-standard text-foreground outline-none"
@@ -306,9 +308,12 @@ const ProposalWizard = ({ direction, presetAmounts }: Props) => {
           className="mt-auto pt-6 flex gap-3"
           style={{ paddingBottom: "calc(6rem + env(safe-area-inset-bottom))" }}
         >
+          {/* Equal widths: both are flex-1 with the same padding and type
+              size. Only the colour separates them, which is what marks Next
+              as the one to press. */}
           <button
             onClick={goBack}
-            className="px-6 py-4 rounded-full bg-secondary text-foreground text-body-standard font-bold"
+            className="flex-1 py-4 rounded-full bg-secondary text-foreground text-title font-bold"
           >
             {t("wizard.back")}
           </button>

@@ -39,7 +39,7 @@ const Inbox = () => {
           {p.kind === "request"
             ? t("inbox.wantsToBorrow", { name: p.counterparty.name })
             : t("inbox.offeredYou", { name: p.counterparty.name })}{" "}
-          <span className="text-primary font-bold">{p.amount.toLocaleString("nb-NO")} kr</span>
+          <span className="text-primary font-bold whitespace-nowrap">{p.amount.toLocaleString("nb-NO")} kr</span>
         </p>
         <p className="text-body-micro text-muted-foreground">
           {t("inbox.repayIn", {

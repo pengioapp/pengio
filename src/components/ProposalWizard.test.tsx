@@ -36,6 +36,16 @@ vi.mock("@/components/ContactPicker", () => ({
 const toastError = vi.fn();
 vi.mock("sonner", () => ({ toast: { error: (m: string) => toastError(m), success: vi.fn() } }));
 
+// Stubbed to one button that picks a date, so the steps beyond it can be
+// reached without rendering a month grid (slow) or clicking a real day.
+vi.mock("@/components/DateField", () => ({
+  default: ({ onChange, value }: { onChange: (d: Date) => void; value?: Date }) => (
+    <button onClick={() => onChange(new Date(2027, 0, 15))}>
+      {value ? "date-chosen" : "pick-date"}
+    </button>
+  ),
+}));
+
 vi.mock("@/context/LanguageContext", () => ({
   useTranslation: () => ({
     language: "en",
@@ -122,6 +132,35 @@ describe("ProposalWizard", () => {
     renderWizard();
     back();
     expect(navigate).toHaveBeenCalledWith("/home");
+  });
+
+  it("accepts an interest rate up to 100, which is what the database allows", () => {
+    renderWizard();
+    next();                                                   // amount
+    fireEvent.click(screen.getByText("pick-contact"));
+    next();                                                   // person
+    fireEvent.click(screen.getByText("pick-date"));
+    next();                                                   // date
+    expect(screen.getByText("wizard.step:4,6")).toBeInTheDocument();
+
+    const interest = screen.getByPlaceholderText("borrow.enterInterestRate");
+    fireEvent.change(interest, { target: { value: "100" } });
+    expect(interest).toHaveValue("100");
+  });
+
+  it("still refuses an interest rate above 100", () => {
+    renderWizard();
+    next();
+    fireEvent.click(screen.getByText("pick-contact"));
+    next();
+    fireEvent.click(screen.getByText("pick-date"));
+    next();
+
+    const interest = screen.getByPlaceholderText("borrow.enterInterestRate");
+    fireEvent.change(interest, { target: { value: "50" } });
+    fireEvent.change(interest, { target: { value: "101" } });
+    // Rejected keystroke leaves the previous valid value in place.
+    expect(interest).toHaveValue("50");
   });
 
   it("blocks a contact who has not joined Pengio, naming them", () => {

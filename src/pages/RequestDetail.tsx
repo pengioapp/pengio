@@ -97,7 +97,7 @@ const RequestDetail = () => {
               <Coins className="w-5 h-5 text-muted-foreground shrink-0" />
               <div>
                 <p className="text-body-micro text-muted-foreground">{t("loanRequest.amount")}</p>
-                <p className="text-body-standard font-bold text-foreground">{request.amount.toLocaleString("nb-NO")} kr</p>
+                <p className="text-body-standard font-bold text-foreground whitespace-nowrap">{request.amount.toLocaleString("nb-NO")} kr</p>
               </div>
             </div>
             <div className="flex-1 bg-background/30 rounded-xl px-3 py-3 flex items-center gap-2.5">
