@@ -181,7 +181,7 @@ const no = {
   "lend.followUpWarning": "Pengio kan minne dere begge på nedbetalingsdatoen. Appen kan ikke kreve inn pengene.",
   "lend.agreementText1": "Pengio registrerer det dere avtaler. Appen overfører ikke penger. Det ordner dere selv, og registrerer tilbakebetalingene her.",
   "lend.agreementText2": "Begge kan se de avtalte vilkårene når som helst. De kan ikke endres i ettertid.",
-  "lend.sendOffer": "Send lånetilbud",
+  "lend.sendOffer": "Send tilbud",
   "lend.selectError": "Vennligst velg en mottaker",
   "lend.successTitle": "Tilbud sendt!",
   "lend.successSubtitle": "De blir varslet og kan godta eller avslå.",

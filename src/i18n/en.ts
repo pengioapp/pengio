@@ -181,7 +181,7 @@ const en = {
   "lend.followUpWarning": "Pengio can remind you both about the repayment date. It cannot collect the money.",
   "lend.agreementText1": "Pengio records what you agree. It does not transfer money. Arrange that between yourselves and record the repayments here.",
   "lend.agreementText2": "Both of you can see the agreed terms at any time. They cannot be changed afterwards.",
-  "lend.sendOffer": "Send loan offer",
+  "lend.sendOffer": "Send Offer",
   "lend.selectError": "Please select a recipient",
   "lend.successTitle": "Offer sent!",
   "lend.successSubtitle": "They will be notified and can accept or decline.",
