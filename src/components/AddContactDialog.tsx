@@ -68,7 +68,8 @@ const AddContactDialog = ({ open, onOpenChange, onAdded }: Props) => {
       reset();
       onOpenChange(false);
     } catch (e) {
-      setError((e as Error).message);
+      // The hook throws a translation key; t() passes anything else through.
+      setError(t((e as Error).message));
     }
   };
 

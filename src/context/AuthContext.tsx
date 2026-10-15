@@ -71,13 +71,18 @@ const ageFromBirthDate = (birthDate: string | null): string => {
 };
 
 // Supabase surfaces raw auth errors that are fine for logs but poor for users.
+/**
+ * Supabase speaks English and this runs outside React, so it returns a
+ * translation key rather than a sentence. Callers pass the result through t(),
+ * which falls back to the key itself -- so an unrecognised Supabase message
+ * still reaches the user intact rather than vanishing.
+ */
 const humanise = (message: string): string => {
   const m = message.toLowerCase();
-  if (m.includes("invalid login credentials")) return "Wrong email or password.";
-  if (m.includes("email not confirmed")) return "Check your inbox to confirm your email first.";
-  if (m.includes("already registered")) return "That email already has an account.";
-  if (m.includes("rate limit")) return "Too many attempts. Wait a minute and try again.";
-  if (m.includes("password")) return message;
+  if (m.includes("invalid login credentials")) return "authError.wrongCredentials";
+  if (m.includes("email not confirmed")) return "authError.emailNotConfirmed";
+  if (m.includes("already registered")) return "authError.emailTaken";
+  if (m.includes("rate limit")) return "authError.rateLimited";
   return message;
 };
 

@@ -51,7 +51,7 @@ const ResetPassword = () => {
     const { error: setError_ } = await setPassword(password);
 
     if (setError_) {
-      setError(setError_);
+      setError(t(setError_));
       setSubmitting(false);
       return;
     }

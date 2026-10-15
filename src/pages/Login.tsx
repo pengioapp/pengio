@@ -41,7 +41,7 @@ const Login = () => {
     const { error: signInError } = await signIn(email, password);
 
     if (signInError) {
-      setError(signInError);
+      setError(t(signInError));
       setSubmitting(false);
       return;
     }

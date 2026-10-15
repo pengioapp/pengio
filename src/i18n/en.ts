@@ -175,7 +175,7 @@ const en = {
   "lend.howMuch": "How much do you want to lend?",
   "lend.selectRecipient": "Who do you want to lend money to?",
   "lend.chooseRecipient": "Search by name or number",
-  "lend.repaymentPeriod": "Repayment period",
+  "lend.repaymentPeriod": "When should it be repaid?",
   "lend.selectDate": "Select a date",
   "lend.interestRate": "Interest rate",
   "lend.followUpWarning": "Pengio can remind you both about the repayment date. It cannot collect the money.",
@@ -215,7 +215,7 @@ const en = {
 
   // Edit Personal Info
   "editInfo.title": "Edit personal information",
-  "editInfo.bankId": "Bank ID",
+  "editInfo.bankId": "BankID",
   "editInfo.assessment": "Assessment",
   "editInfo.wantBorrow": "Want to borrow money",
   "editInfo.wantLend": "Want to lend money",
@@ -230,7 +230,6 @@ const en = {
   "editInfo.language": "Language",
   "editInfo.english": "English",
   "editInfo.norwegian": "Norwegian",
-  "editInfo.swedish": "Swedish",
   "editInfo.aboutMe": "About me",
   "editInfo.enterText": "Enter Text",
   "editInfo.updateInfo": "Update info",
@@ -312,7 +311,7 @@ const en = {
   "requestDetail.interestRate": "Interest rate",
   "requestDetail.enterInterest": "Enter interest %",
   "requestDetail.loanAgreement": "Loan agreement details",
-  "requestDetail.agreementText": "A legally binding loan agreement will be generated. Both parties must sign via BankID.",
+  "requestDetail.agreementText": "Approving records the agreement in Pengio. No money moves. Arrange the transfer between yourselves and record the repayments here.",
   "requestDetail.rejectReasonTitle": "Reason for rejection",
   "requestDetail.rejectReasonDescription": "Please provide a reason for rejecting this request.",
   "requestDetail.enterReason": "Enter reason",
@@ -409,6 +408,17 @@ const en = {
   "wizard.messageOptional": "Add a message (optional)",
   "wizard.messageSkip": "You can leave this empty.",
   "wizard.pickPersonFirst": "Choose who this is for.",
+
+  // Errors that come back from Supabase or a hook, carried as keys because
+  // they originate outside React and cannot reach t() themselves.
+  "authError.wrongCredentials": "Wrong email or password.",
+  "authError.emailNotConfirmed": "Check your inbox to confirm your email first.",
+  "authError.emailTaken": "That email already has an account.",
+  "authError.rateLimited": "Too many attempts. Wait a minute and try again.",
+  "contacts.notSignedIn": "You are not signed in.",
+  "contacts.alreadyAdded": "That person is already in your contacts.",
+  "createAccount.nameRequired": "Enter your name.",
+  "createAccount.termsRequired": "You need to accept the terms to continue.",
 
   // Notifications
   "notifications.title": "Notifications",

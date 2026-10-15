@@ -18,9 +18,13 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 const STORAGE_KEY = "pengio-language";
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
+  // Norwegian by default: Pengio is a Norwegian app, the amounts are kroner
+  // and the people testing it are Norwegian. English stays one tap away in
+  // the profile. A saved choice still wins, so anyone who has already picked
+  // English keeps it.
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return (saved === "en" || saved === "no") ? saved : "en";
+    return (saved === "en" || saved === "no") ? saved : "no";
   });
 
   const setLanguage = useCallback((lang: Language) => {

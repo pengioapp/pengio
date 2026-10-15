@@ -28,23 +28,23 @@ const CreateAccount = () => {
     // Every branch reports why. Previously these returned silently, so a
     // mismatched password looked identical to a broken button.
     if (!fullName.trim()) {
-      setError("Enter your name.");
+      setError(t("createAccount.nameRequired"));
       return;
     }
     if (!email.trim()) {
-      setError("Enter your email address.");
+      setError(t("login.emailRequired"));
       return;
     }
     if (password.length < MIN_PASSWORD_LENGTH) {
-      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+      setError(t("reset.tooShort"));
       return;
     }
     if (password !== confirmPassword) {
-      setError("The two passwords do not match.");
+      setError(t("reset.mismatch"));
       return;
     }
     if (!termsAccepted) {
-      setError("You need to accept the terms to continue.");
+      setError(t("createAccount.termsRequired"));
       return;
     }
 
@@ -54,7 +54,7 @@ const CreateAccount = () => {
     const { error: signUpError } = await signUp(fullName, email, password);
 
     if (signUpError) {
-      setError(signUpError);
+      setError(t(signUpError));
       setSubmitting(false);
       return;
     }

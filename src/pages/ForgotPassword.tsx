@@ -32,7 +32,7 @@ const ForgotPassword = () => {
     // tell anyone who asks which addresses are registered here -- on an app
     // about borrowing money, that is not a harmless thing to disclose.
     if (resetError && !resetError.toLowerCase().includes("not found")) {
-      setError(resetError);
+      setError(t(resetError));
       setSubmitting(false);
       return;
     }

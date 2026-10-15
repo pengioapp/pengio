@@ -50,7 +50,7 @@ export function useAddContact() {
 
   return useMutation({
     mutationFn: async (input: { name: string; email?: string; phone?: string }) => {
-      if (!session?.user) throw new Error("You are not signed in.");
+      if (!session?.user) throw new Error("contacts.notSignedIn");
 
       // Linking happens in the database, not here. Looking the profile up from
       // the client cannot work: row level security hides a profile until the
@@ -69,7 +69,7 @@ export function useAddContact() {
         .single();
 
       if (error) {
-        if (error.code === "23505") throw new Error("That person is already in your contacts.");
+        if (error.code === "23505") throw new Error("contacts.alreadyAdded");
         throw new Error(error.message);
       }
 
