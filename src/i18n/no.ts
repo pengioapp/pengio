@@ -165,7 +165,6 @@ const no = {
   "borrow.selectError": "Velg en kontakt.",
   "borrow.requestSent": "Forespørsel sendt!",
   "borrow.requestSentSubtitle": "L\u00e5neforesp\u00f8rselen er sendt.",
-  "borrow.searchContact": "Søk etter navn eller nummer",
   "borrow.addNewContact": "+ Legg til ny kontakt",
 
   // Lend Money
@@ -183,7 +182,6 @@ const no = {
   "lend.selectError": "Velg en mottaker.",
   "lend.successTitle": "Tilbud sendt!",
   "lend.successSubtitle": "De blir varslet og kan godta eller avslå.",
-  "lend.searchContact": "Søk etter navn eller nummer",
 
   // Profile
   "profile.title": "Profil og innstillinger",
@@ -436,6 +434,9 @@ const no = {
   "createAccount.phoneInfo": "Det er slik venner finner deg p\u00e5 Pengio.",
   "createAccount.phoneRequired": "Skriv inn telefonnummeret ditt.",
   "createAccount.phoneTaken": "Nummeret er allerede registrert p\u00e5 en annen konto.",
+
+  "picker.change": "Velg noen andre",
+  "picker.noMatch": "Ingen kontakt passer med det.",
 
   // Notifications
   "notifications.title": "Varsler",

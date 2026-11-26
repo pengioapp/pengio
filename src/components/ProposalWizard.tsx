@@ -194,7 +194,6 @@ const ProposalWizard = ({ direction, presetAmounts }: Props) => {
               selected={contact}
               onSelect={setContact}
               placeholder={t(isBorrow ? "borrow.selectContactPlaceholder" : "lend.chooseRecipient")}
-              searchPlaceholder={t(isBorrow ? "borrow.searchContact" : "lend.searchContact")}
             />
           </Question>
         )}

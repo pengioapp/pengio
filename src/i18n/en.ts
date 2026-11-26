@@ -165,7 +165,6 @@ const en = {
   "borrow.selectError": "Please select a contact",
   "borrow.requestSent": "Request sent!",
   "borrow.requestSentSubtitle": "Your borrow request has been successfully sent.",
-  "borrow.searchContact": "Search by name or number",
   "borrow.addNewContact": "+ Add new contact",
 
   // Lend Money
@@ -183,7 +182,6 @@ const en = {
   "lend.selectError": "Please select a recipient",
   "lend.successTitle": "Offer sent!",
   "lend.successSubtitle": "They will be notified and can accept or decline.",
-  "lend.searchContact": "Search by name or number",
 
   // Profile
   "profile.title": "Profile & settings",
@@ -436,6 +434,9 @@ const en = {
   "createAccount.phoneInfo": "This is how friends find you on Pengio.",
   "createAccount.phoneRequired": "Enter your phone number.",
   "createAccount.phoneTaken": "That number is already registered to another account.",
+
+  "picker.change": "Choose someone else",
+  "picker.noMatch": "No contact matches that.",
 
   // Notifications
   "notifications.title": "Notifications",
