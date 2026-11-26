@@ -27,6 +27,9 @@ const PasswordField = ({ value, onChange, placeholder, autoComplete = "current-p
       <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
       <input
         type={visible ? "text" : "password"}
+        // Named as well as autoComplete-tagged: some password managers key on
+        // one and some on the other.
+        name={autoComplete === "new-password" ? "new-password" : "password"}
         autoComplete={autoComplete}
         value={value}
         onChange={(e) => onChange(e.target.value)}

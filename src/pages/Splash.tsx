@@ -1,16 +1,27 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import pengioLogo from "@/assets/pengio-logo.png";
+import { useAuth } from "@/context/AuthContext";
+
+/** Long enough to read the logo, short enough not to be in the way. */
+const SPLASH_MS = 1200;
 
 const Splash = () => {
   const navigate = useNavigate();
+  const { session, loading } = useAuth();
 
+  // The session was always being restored from storage; this screen just sent
+  // everyone to /login regardless, so signing in looked like something the app
+  // demanded every time. Restoring is asynchronous, so the decision waits for
+  // it -- otherwise a signed-in user is sent to /login a moment before their
+  // session arrives.
   useEffect(() => {
+    if (loading) return;
     const timer = setTimeout(() => {
-      navigate("/login");
-    }, 2500);
+      navigate(session ? "/home" : "/login", { replace: true });
+    }, SPLASH_MS);
     return () => clearTimeout(timer);
-  }, [navigate]);
+  }, [navigate, session, loading]);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-primary overflow-hidden">

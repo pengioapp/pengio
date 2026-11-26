@@ -74,7 +74,7 @@ const Login = () => {
             <label className="text-body-small text-foreground mb-2 block font-medium">{t("login.email")}</label>
             <div className="flex items-center gap-3 bg-secondary rounded-xl px-4 py-3.5">
               <Mail className="w-4 h-4 text-muted-foreground" />
-              <input type="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} placeholder={t("login.enterEmail")} className="flex-1 bg-transparent text-body-standard text-foreground placeholder:text-muted-foreground outline-none" />
+              <input type="email" name="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} placeholder={t("login.enterEmail")} className="flex-1 bg-transparent text-body-standard text-foreground placeholder:text-muted-foreground outline-none" />
             </div>
           </div>
 
