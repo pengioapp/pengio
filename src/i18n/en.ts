@@ -55,9 +55,7 @@ const en = {
   "createAccount.enterEmail": "Enter email",
   "createAccount.email": "Email",
   "createAccount.password": "Password",
-  "createAccount.confirmPassword": "Confirm password",
   "createAccount.enterPassword": "Enter your password",
-  "createAccount.reEnterPassword": "Re-Enter your password",
   "createAccount.terms": "By continuing, you accept pengio's terms & conditions and privacy policy.",
   "createAccount.create": "Create an account",
   "createAccount.or": "Or",
@@ -257,7 +255,6 @@ const en = {
   "addMember.title": "Add contact",
   "addMember.subtitle": "Invite a friend or family member. They need a Pengio account before you can lend to or borrow from each other.",
   "addMember.fullName": "Full name",
-  "addMember.phoneNumber": "Phone number",
   "addMember.email": "Email address",
   "addMember.emailInfo": "We use the email address to connect you on Pengio. It must match the one they signed up with.",
   "addMember.notOnPengio": "Not on Pengio yet",
@@ -265,7 +262,6 @@ const en = {
   "addMember.savedUnlinked": "{name} saved. They are not on Pengio yet, so you cannot lend to them until they join.",
   "addMember.save": "Add contact",
   "addMember.nameRequired": "Enter a name.",
-  "addMember.emailRequired": "Enter an email address.",
 
   // Login Security
   "loginSecurity.title": "Login & security",
@@ -419,6 +415,27 @@ const en = {
   "contacts.alreadyAdded": "That person is already in your contacts.",
   "createAccount.nameRequired": "Enter your name.",
   "createAccount.termsRequired": "You need to accept the terms to continue.",
+
+  // Phone numbers and phone lookup
+  "phone.label": "Phone number",
+  "phone.enterNumber": "Phone number",
+  "phone.country": "Country code",
+  "phone.find": "Find",
+  "phone.searching": "Looking up…",
+  "phone.found": "Found on Pengio",
+  "phone.addPerson": "Add {name}",
+  "phone.notFound": "Nobody on Pengio has this number yet.",
+  "phone.saveAnyway": "Save them anyway and you will be connected when they join.",
+  "phone.saveUnlinked": "Save for later",
+  "phone.nameForUnlinked": "What should we call them?",
+  "phone.invalid": "That does not look like a phone number.",
+  "phone.rateLimited": "Too many lookups. Try again in an hour.",
+  "phone.unverified": "Check the name before you send anything. Numbers are not verified yet.",
+  "phone.required": "Enter a phone number.",
+  "createAccount.phone": "Phone number",
+  "createAccount.phoneInfo": "This is how friends find you on Pengio.",
+  "createAccount.phoneRequired": "Enter your phone number.",
+  "createAccount.phoneTaken": "That number is already registered to another account.",
 
   // Notifications
   "notifications.title": "Notifications",

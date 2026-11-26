@@ -366,6 +366,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      find_user_by_phone: {
+        Args: { phone: string }
+        Returns: { id: string; full_name: string }[]
+      }
+      normalise_phone: {
+        Args: { raw: string }
+        Returns: string | null
+      }
       confirm_payment: {
         Args: { payment: string }
         Returns: undefined

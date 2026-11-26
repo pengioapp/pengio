@@ -93,6 +93,28 @@ export function useAddContact() {
   });
 }
 
+/**
+ * Looking someone up by phone number, the way Vipps does.
+ *
+ * Exact match only, one number per call. The database refuses a partial
+ * number outright rather than treating it as a prefix search: a search over
+ * the people registered on a lending app is an enumeration tool, and it also
+ * rate-limits how fast one account can walk the directory.
+ *
+ * Returns null when nobody holds that number, which is a normal answer rather
+ * than an error -- most numbers belong to people who have not joined.
+ */
+export function useFindByPhone() {
+  return useMutation({
+    mutationFn: async (phone: string): Promise<{ id: string; name: string } | null> => {
+      const { data, error } = await supabase.rpc("find_user_by_phone", { phone });
+      if (error) throw new Error(error.message);
+      const hit = data?.[0];
+      return hit ? { id: hit.id, name: hit.full_name } : null;
+    },
+  });
+}
+
 export function useRemoveContact() {
   const queryClient = useQueryClient();
 

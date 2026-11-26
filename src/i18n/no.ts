@@ -55,9 +55,7 @@ const no = {
   "createAccount.enterEmail": "Skriv inn e-post",
   "createAccount.email": "E-post",
   "createAccount.password": "Passord",
-  "createAccount.confirmPassword": "Bekreft passord",
   "createAccount.enterPassword": "Skriv inn passordet ditt",
-  "createAccount.reEnterPassword": "Skriv inn passordet på nytt",
   "createAccount.terms": "Ved \u00e5 fortsette godtar du Pengios vilk\u00e5r og personvernregler.",
   "createAccount.create": "Opprett konto",
   "createAccount.or": "Eller",
@@ -257,7 +255,6 @@ const no = {
   "addMember.title": "Legg til kontakt",
   "addMember.subtitle": "Inviter en venn eller et familiemedlem. De m\u00e5 ha en Pengio-konto f\u00f8r dere kan l\u00e5ne til eller fra hverandre.",
   "addMember.fullName": "Fullt navn",
-  "addMember.phoneNumber": "Telefonnummer",
   "addMember.email": "E-postadresse",
   "addMember.emailInfo": "Vi bruker e-postadressen til \u00e5 koble dere sammen p\u00e5 Pengio. Den m\u00e5 v\u00e6re den samme som de registrerte seg med.",
   "addMember.notOnPengio": "Ikke p\u00e5 Pengio enn\u00e5",
@@ -265,7 +262,6 @@ const no = {
   "addMember.savedUnlinked": "{name} lagret. De er ikke p\u00e5 Pengio enn\u00e5, s\u00e5 du kan ikke l\u00e5ne ut til dem f\u00f8r de blir med.",
   "addMember.save": "Legg til kontakt",
   "addMember.nameRequired": "Skriv inn et navn.",
-  "addMember.emailRequired": "Skriv inn en e-postadresse.",
 
   // Login Security
   "loginSecurity.title": "Innlogging og sikkerhet",
@@ -419,6 +415,27 @@ const no = {
   "contacts.alreadyAdded": "Denne personen er allerede i kontaktene dine.",
   "createAccount.nameRequired": "Skriv inn navnet ditt.",
   "createAccount.termsRequired": "Du m\u00e5 godta vilk\u00e5rene for \u00e5 fortsette.",
+
+  // Phone numbers and phone lookup
+  "phone.label": "Telefonnummer",
+  "phone.enterNumber": "Telefonnummer",
+  "phone.country": "Landskode",
+  "phone.find": "Finn",
+  "phone.searching": "S\u00f8ker \u2026",
+  "phone.found": "Finnes p\u00e5 Pengio",
+  "phone.addPerson": "Legg til {name}",
+  "phone.notFound": "Ingen p\u00e5 Pengio har dette nummeret enn\u00e5.",
+  "phone.saveAnyway": "Lagre dem likevel, s\u00e5 kobles dere sammen n\u00e5r de blir med.",
+  "phone.saveUnlinked": "Lagre til senere",
+  "phone.nameForUnlinked": "Hva heter de?",
+  "phone.invalid": "Dette ser ikke ut som et telefonnummer.",
+  "phone.rateLimited": "For mange s\u00f8k. Pr\u00f8v igjen om en time.",
+  "phone.unverified": "Sjekk navnet f\u00f8r du sender noe. Numre er ikke bekreftet enn\u00e5.",
+  "phone.required": "Skriv inn et telefonnummer.",
+  "createAccount.phone": "Telefonnummer",
+  "createAccount.phoneInfo": "Det er slik venner finner deg p\u00e5 Pengio.",
+  "createAccount.phoneRequired": "Skriv inn telefonnummeret ditt.",
+  "createAccount.phoneTaken": "Nummeret er allerede registrert p\u00e5 en annen konto.",
 
   // Notifications
   "notifications.title": "Varsler",

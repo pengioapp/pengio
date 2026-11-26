@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Phone, Mail, Info } from "lucide-react";
+import { ArrowLeft, User, Mail, Info } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslation } from "@/context/LanguageContext";
 import { useAddContact } from "@/hooks/useContacts";
+import PhoneField from "@/components/PhoneField";
+import { fullNumber } from "@/lib/phone";
 
 const inputClass =
   "w-full bg-secondary/60 rounded-xl px-4 py-3.5 text-foreground text-base placeholder:text-muted-foreground outline-none border-none";
@@ -15,6 +17,7 @@ const AddMember = () => {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phoneCode, setPhoneCode] = useState("+47");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
 
@@ -23,18 +26,19 @@ const AddMember = () => {
       setError(t("addMember.nameRequired"));
       return;
     }
-    // Email is what links this contact to their Pengio account, and that link
-    // is what the database requires before either of you can propose a loan.
-    if (!email.trim()) {
-      setError(t("addMember.emailRequired"));
+    // Either identifier links the contact to their account, and that link is
+    // what the database requires before a loan can be proposed. The number is
+    // the one people actually know by heart, so it is enough on its own now.
+    if (!phone.trim() && !email.trim()) {
+      setError(t("phone.required"));
       return;
     }
 
     try {
       const { linked } = await addContact.mutateAsync({
         name,
-        email,
-        phone: phone.trim() ? `+47${phone.trim()}` : undefined,
+        email: email.trim() || undefined,
+        phone: phone.trim() ? fullNumber(phoneCode, phone) : undefined,
       });
 
       toast.success(
@@ -87,18 +91,12 @@ const AddMember = () => {
           />
         </div>
 
-        <div className="relative flex items-center bg-secondary/60 rounded-xl overflow-hidden">
-          <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
-          <span className="pl-12 pr-2 text-foreground text-base select-none">+47</span>
-          <input
-            type="tel"
-            autoComplete="tel"
-            placeholder={t("addMember.phoneNumber")}
-            value={phone}
-            onChange={(e) => { setPhone(e.target.value); setError(""); }}
-            className="flex-1 bg-transparent py-3.5 pr-4 text-foreground text-base placeholder:text-muted-foreground outline-none border-none"
-          />
-        </div>
+        <PhoneField
+          code={phoneCode}
+          onCodeChange={setPhoneCode}
+          number={phone}
+          onNumberChange={(v) => { setPhone(v); setError(""); }}
+        />
       </div>
 
       <div className="px-6 mt-6">

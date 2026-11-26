@@ -4,6 +4,8 @@ import { Mail, CheckSquare, Square, User } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import PasswordField from "@/components/PasswordField";
+import PhoneField from "@/components/PhoneField";
+import { fullNumber } from "@/lib/phone";
 
 // Supabase's own minimum is 6, but these are accounts holding people's debt
 // records. Eight is still modest; it just rules out the worst.
@@ -15,8 +17,9 @@ const CreateAccount = () => {
   const { signUp } = useAuth();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phoneCode, setPhoneCode] = useState("+47");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -35,12 +38,15 @@ const CreateAccount = () => {
       setError(t("login.emailRequired"));
       return;
     }
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      setError(t("reset.tooShort"));
+    if (!phone.trim()) {
+      setError(t("createAccount.phoneRequired"));
       return;
     }
-    if (password !== confirmPassword) {
-      setError(t("reset.mismatch"));
+    // Confirm-password is gone: the field can be revealed with the eye toggle,
+    // and a forgotten password is recoverable now. Two chances to typo the
+    // same thing was the slowest part of signing up.
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(t("reset.tooShort"));
       return;
     }
     if (!termsAccepted) {
@@ -51,7 +57,7 @@ const CreateAccount = () => {
     setSubmitting(true);
     setError("");
 
-    const { error: signUpError } = await signUp(fullName, email, password);
+    const { error: signUpError } = await signUp(fullName, email, password, fullNumber(phoneCode, phone));
 
     if (signUpError) {
       setError(t(signUpError));
@@ -110,13 +116,14 @@ const CreateAccount = () => {
           </div>
 
           <div>
-            <label className="text-body-small text-foreground mb-2 block">{t("createAccount.confirmPassword")}</label>
-            <PasswordField
-              value={confirmPassword}
-              onChange={(v) => { setConfirmPassword(v); setError(""); }}
-              placeholder={t("createAccount.reEnterPassword")}
-              autoComplete="new-password"
+            <label className="text-body-small text-foreground mb-2 block">{t("createAccount.phone")}</label>
+            <PhoneField
+              code={phoneCode}
+              onCodeChange={setPhoneCode}
+              number={phone}
+              onNumberChange={(v) => { setPhone(v); setError(""); }}
             />
+            <p className="text-body-micro text-muted-foreground mt-1.5">{t("createAccount.phoneInfo")}</p>
           </div>
 
           <button type="button" onClick={() => setTermsAccepted(!termsAccepted)} className="flex items-start gap-3 mt-1">

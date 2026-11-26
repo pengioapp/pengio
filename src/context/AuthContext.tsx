@@ -36,7 +36,7 @@ interface AuthContextType {
    *  a signed-in user to /login during the first render. */
   loading: boolean;
   signIn: (email: string, password: string) => Promise<AuthResult>;
-  signUp: (name: string, email: string, password: string) => Promise<AuthResult>;
+  signUp: (name: string, email: string, password: string, phone?: string) => Promise<AuthResult>;
   requestPasswordReset: (email: string) => Promise<AuthResult>;
   setPassword: (password: string) => Promise<AuthResult>;
   logout: () => Promise<void>;
@@ -83,6 +83,8 @@ const humanise = (message: string): string => {
   if (m.includes("email not confirmed")) return "authError.emailNotConfirmed";
   if (m.includes("already registered")) return "authError.emailTaken";
   if (m.includes("rate limit")) return "authError.rateLimited";
+  // The profile trigger raises this when a number is already registered.
+  if (m.includes("profiles_phone_unique")) return "createAccount.phoneTaken";
   return message;
 };
 
@@ -161,13 +163,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signUp = useCallback(
-    async (name: string, email: string, password: string): Promise<AuthResult> => {
+    async (name: string, email: string, password: string, phone?: string): Promise<AuthResult> => {
       const { error } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
-        // Read by handle_new_user() to populate profiles.full_name, so the
-        // profile is never created nameless.
-        options: { data: { full_name: name.trim() } },
+        // Read by handle_new_user() to populate the profile, so it is never
+        // created nameless or unfindable.
+        options: { data: { full_name: name.trim(), phone: phone?.trim() || null } },
       });
       return { error: error ? humanise(error.message) : null };
     },

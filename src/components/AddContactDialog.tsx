@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Mail, User } from "lucide-react";
+import { User, CheckCircle2 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { useTranslation } from "@/context/LanguageContext";
-import { useAddContact, type Contact } from "@/hooks/useContacts";
+import { useAddContact, useFindByPhone, type Contact } from "@/hooks/useContacts";
+import PhoneField from "@/components/PhoneField";
+import { fullNumber } from "@/lib/phone";
 
 interface Props {
   open: boolean;
@@ -14,31 +16,35 @@ interface Props {
 }
 
 /**
- * Adding someone without leaving the screen you were on.
+ * Adding someone by phone number, without leaving the screen you were on.
  *
- * The contact picker used to send people to /add-member, which meant the
- * half-filled loan form behind it was thrown away: pick an amount, realise the
- * person is missing, add them, come back to a blank form. Testers described
- * this as having to add members before they could do anything.
+ * Testers found adding by email cumbersome, and they were right: nobody knows
+ * a friend's email by heart, but everyone knows their number. So the number is
+ * the way in, and the name comes back from the lookup rather than being typed.
  *
- * A contact who has not joined Pengio still cannot be lent to -- the database
- * requires both parties to be registered -- so they are saved but not selected,
- * and the dialog says why rather than silently doing nothing.
+ * Confirming the name matters more than usual here. Numbers are not verified
+ * until there is an SMS provider, so the name on screen is the one claimed by
+ * whoever registered that number -- which is exactly what the person adding
+ * them is in a position to recognise, or not.
  */
 const AddContactDialog = ({ open, onOpenChange, onAdded }: Props) => {
   const { t } = useTranslation();
   const addContact = useAddContact();
+  const findByPhone = useFindByPhone();
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("+47");
+  const [number, setNumber] = useState("");
+  const [found, setFound] = useState<{ id: string; name: string } | null>(null);
+  const [missing, setMissing] = useState(false);
+  const [unlinkedName, setUnlinkedName] = useState("");
   const [error, setError] = useState("");
-  const [savedUnlinked, setSavedUnlinked] = useState<string | null>(null);
 
   const reset = () => {
-    setName("");
-    setEmail("");
+    setNumber("");
+    setFound(null);
+    setMissing(false);
+    setUnlinkedName("");
     setError("");
-    setSavedUnlinked(null);
   };
 
   const close = (next: boolean) => {
@@ -46,100 +52,133 @@ const AddContactDialog = ({ open, onOpenChange, onAdded }: Props) => {
     onOpenChange(next);
   };
 
-  const handleSave = async () => {
-    if (!name.trim()) {
-      setError(t("addMember.nameRequired"));
-      return;
-    }
-    if (!email.trim()) {
-      setError(t("addMember.emailRequired"));
-      return;
-    }
+  // Editing the number invalidates whatever the last lookup said.
+  const changeNumber = (value: string) => {
+    setNumber(value);
+    setFound(null);
+    setMissing(false);
+    setError("");
+  };
 
+  const handleFind = async () => {
+    if (!number.trim()) {
+      setError(t("phone.required"));
+      return;
+    }
+    setError("");
     try {
-      const { linked, contact } = await addContact.mutateAsync({ name, email });
-
-      if (!linked) {
-        setSavedUnlinked(contact.name);
-        return;
-      }
-
-      onAdded(contact);
-      reset();
-      onOpenChange(false);
+      const hit = await findByPhone.mutateAsync(fullNumber(code, number));
+      if (hit) setFound(hit);
+      else setMissing(true);
     } catch (e) {
-      // The hook throws a translation key; t() passes anything else through.
+      // The database raises translation keys; t() passes anything else through.
       setError(t((e as Error).message));
     }
   };
+
+  const save = async (name: string) => {
+    try {
+      const { contact, linked } = await addContact.mutateAsync({
+        name,
+        phone: fullNumber(code, number),
+      });
+      // An unlinked contact cannot be lent to yet, so it is saved but not
+      // handed back for selection.
+      if (linked) onAdded(contact);
+      reset();
+      onOpenChange(false);
+    } catch (e) {
+      setError(t((e as Error).message));
+    }
+  };
+
+  const busy = findByPhone.isPending || addContact.isPending;
 
   return (
     <Dialog open={open} onOpenChange={close}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>{t("addMember.title")}</DialogTitle>
-          <DialogDescription>{t("addMember.subtitle")}</DialogDescription>
+          <DialogDescription>{t("phone.enterNumber")}</DialogDescription>
         </DialogHeader>
 
-        {savedUnlinked ? (
-          <>
-            <p className="text-body-small text-muted-foreground">
-              {t("addMember.savedUnlinked", { name: savedUnlinked })}
-            </p>
-            <DialogFooter>
-              <button
-                type="button"
-                onClick={() => close(false)}
-                className="w-full py-3 rounded-full bg-primary text-primary-foreground font-bold"
-              >
-                {t("common.ok")}
-              </button>
-            </DialogFooter>
-          </>
-        ) : (
-          <>
-            <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3">
+          <PhoneField
+            code={code}
+            onCodeChange={setCode}
+            number={number}
+            onNumberChange={changeNumber}
+            autoFocus
+          />
+
+          {found && (
+            <div className="bg-pengio-green/15 rounded-xl px-4 py-3 flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-pengio-green shrink-0" />
+              <div className="min-w-0">
+                <p className="text-body-standard text-foreground font-medium truncate">{found.name}</p>
+                <p className="text-body-micro text-muted-foreground">{t("phone.found")}</p>
+              </div>
+            </div>
+          )}
+
+          {found && (
+            <p className="text-body-micro text-muted-foreground">{t("phone.unverified")}</p>
+          )}
+
+          {missing && (
+            <>
+              <p className="text-body-small text-muted-foreground">{t("phone.notFound")}</p>
+              <p className="text-body-micro text-muted-foreground">{t("phone.saveAnyway")}</p>
               <div className="flex items-center gap-3 bg-secondary rounded-xl px-4 py-3">
                 <User className="w-4 h-4 text-muted-foreground shrink-0" />
                 <input
                   type="text"
                   autoComplete="name"
-                  value={name}
-                  onChange={(e) => { setName(e.target.value); setError(""); }}
-                  placeholder={t("addMember.fullName")}
+                  value={unlinkedName}
+                  onChange={(e) => { setUnlinkedName(e.target.value); setError(""); }}
+                  placeholder={t("phone.nameForUnlinked")}
                   className="flex-1 bg-transparent text-body-standard text-foreground placeholder:text-muted-foreground outline-none"
                 />
               </div>
+            </>
+          )}
 
-              <div className="flex items-center gap-3 bg-secondary rounded-xl px-4 py-3">
-                <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
-                <input
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                  placeholder={t("addMember.email")}
-                  className="flex-1 bg-transparent text-body-standard text-foreground placeholder:text-muted-foreground outline-none"
-                />
-              </div>
+          {error && <p className="text-destructive text-body-small text-center">{error}</p>}
+        </div>
 
-              <p className="text-body-micro text-muted-foreground">{t("addMember.emailInfo")}</p>
-
-              {error && <p className="text-destructive text-body-small text-center">{error}</p>}
-            </div>
-
-            <DialogFooter>
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={addContact.isPending}
-                className="w-full py-3 rounded-full bg-primary text-primary-foreground font-bold disabled:opacity-60"
-              >
-                {addContact.isPending ? "…" : t("addMember.save")}
-              </button>
-            </DialogFooter>
-          </>
-        )}
+        <DialogFooter>
+          {found ? (
+            <button
+              type="button"
+              onClick={() => save(found.name)}
+              disabled={busy}
+              className="w-full py-3 rounded-full bg-primary text-primary-foreground font-bold disabled:opacity-60"
+            >
+              {busy ? "…" : t("phone.addPerson", { name: found.name.split(" ")[0] })}
+            </button>
+          ) : missing ? (
+            <button
+              type="button"
+              onClick={() => {
+                if (!unlinkedName.trim()) { setError(t("addMember.nameRequired")); return; }
+                void save(unlinkedName);
+              }}
+              disabled={busy}
+              className="w-full py-3 rounded-full bg-secondary text-foreground font-bold disabled:opacity-60"
+            >
+              {busy ? "…" : t("phone.saveUnlinked")}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleFind}
+              disabled={busy}
+              className="w-full py-3 rounded-full bg-primary text-primary-foreground font-bold disabled:opacity-60"
+            >
+              {findByPhone.isPending ? t("phone.searching") : t("phone.find")}
+            </button>
+          )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

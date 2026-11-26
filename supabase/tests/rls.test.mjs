@@ -420,6 +420,102 @@ console.log('\n--- contact linking (the path the app actually uses) ---');
   });
 }
 
+// ---------------------------------------------------------------------------
+console.log('\n--- finding people by phone ---');
+// Numbers are unverified until there is an SMS provider, so these check the
+// things that limit what that fact can do: one number one account, exact match
+// only, and a ceiling on how fast the directory can be walked.
+{
+  const norm = async (raw) => (await db.query(
+    `select public.normalise_phone($1) p`, [raw])).rows[0].p;
+
+  // Anna already holds Erik from the email tests above, and a person may only
+  // be held once, so the linking checks below need a pair of their own.
+  const nora = await uid('nora@test.com', 'Nora Lie');
+
+  check('a bare eight-digit number is assumed Norwegian',
+    await norm('91234567') === '+4791234567', await norm('91234567'));
+  check('spaces and dashes do not change the number',
+    await norm('+47 912 34-567') === '+4791234567', await norm('+47 912 34-567'));
+  check('00 is treated as the international prefix',
+    await norm('004791234567') === '+4791234567', await norm('004791234567'));
+  check('a foreign number keeps its own country code',
+    await norm('+46701234567') === '+46701234567', await norm('+46701234567'));
+  check('too short is rejected rather than stored wrong',
+    await norm('1234') === null, String(await norm('1234')));
+  check('letters alone are rejected',
+    await norm('abc') === null, String(await norm('abc')));
+
+  await db.query(`update public.profiles set phone = '91234567' where id = $1`, [erik]);
+  const stored = await db.query(`select phone from public.profiles where id = $1`, [erik]);
+  check('a number is normalised on the way into the profile',
+    stored.rows[0].phone === '+4791234567', stored.rows[0].phone);
+
+  // The impersonation defence: nobody can sit next to Erik under his number.
+  const dup = await denied(() => db.query(
+    `update public.profiles set phone = '+4791234567' where id = $1`, [mallory]));
+  check('two accounts cannot claim the same number', dup.denied, dup.msg);
+
+  await as(anna, async () => {
+    const r = await db.query(`select * from public.find_user_by_phone('91234567')`);
+    check('an exact number finds the person who holds it',
+      r.rows.length === 1 && r.rows[0].id === erik, `got ${r.rows.length} rows`);
+    check('the lookup returns a name and nothing else',
+      r.rows.length === 1 && Object.keys(r.rows[0]).sort().join(',') === 'full_name,id',
+      Object.keys(r.rows[0] ?? {}).join(','));
+  });
+
+  await as(anna, async () => {
+    const r = await db.query(`select * from public.find_user_by_phone('+4799999999')`);
+    check('an unknown number finds nobody', r.rows.length === 0, `got ${r.rows.length}`);
+  });
+
+  await as(anna, async () => {
+    // Seven digits is not a short search, it is not a number at all, so it is
+    // refused outright rather than quietly matching a prefix.
+    const d = await denied(() => db.query(`select * from public.find_user_by_phone('9123456')`));
+    check('a partial number is refused, not treated as a prefix search', d.denied, d.msg);
+  });
+
+  await as(erik, async () => {
+    const r = await db.query(`select * from public.find_user_by_phone('91234567')`);
+    check('the lookup never returns the caller themselves', r.rows.length === 0, `got ${r.rows.length}`);
+  });
+
+  // Walking a number range is the thing this is meant to stop.
+  await as(mallory, async () => {
+    let blockedAt = null;
+    for (let i = 0; i < 60 && blockedAt === null; i++) {
+      const d = await denied(() => db.query(
+        `select * from public.find_user_by_phone($1)`, [`+479000${String(i).padStart(4, '0')}`]));
+      if (d.denied) blockedAt = i;
+    }
+    check('bulk lookups are cut off', blockedAt !== null && blockedAt <= 45,
+      blockedAt === null ? 'never blocked' : `blocked after ${blockedAt}`);
+  });
+
+  // A contact added by number alone must still connect the two accounts,
+  // otherwise phone-only contacts can never be lent to.
+  await as(nora, async () => {
+    await db.query(
+      `insert into public.contacts (owner_id, display_name, phone) values ($1, 'Erik by number', '912 34 567')`,
+      [nora]);
+    const r = await db.query(
+      `select contact_user_id, phone from public.contacts where display_name = 'Erik by number'`);
+    check('adding by number alone links to that account',
+      r.rows[0].contact_user_id === erik, String(r.rows[0].contact_user_id));
+    check('the stored contact number is normalised',
+      r.rows[0].phone === '+4791234567', r.rows[0].phone);
+  });
+
+  await as(erik, async () => {
+    const d = await denied(() => db.query(
+      `insert into public.contacts (owner_id, display_name, phone) values ($1, 'Me', '91234567')`,
+      [erik]));
+    check('a user cannot add their own number as a contact', d.denied, d.msg);
+  });
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 await db.end();
 await pg.stop();
