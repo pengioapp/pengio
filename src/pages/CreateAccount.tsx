@@ -57,7 +57,7 @@ const CreateAccount = () => {
     setSubmitting(true);
     setError("");
 
-    const { error: signUpError } = await signUp(fullName, email, password, fullNumber(phoneCode, phone));
+    const { error: signUpError, signedIn } = await signUp(fullName, email, password, fullNumber(phoneCode, phone));
 
     if (signUpError) {
       setError(t(signUpError));
@@ -65,10 +65,12 @@ const CreateAccount = () => {
       return;
     }
 
-    // With email confirmation enabled, signUp returns no session, so landing on
-    // /home would immediately bounce back to /login. Send them to sign in, where
-    // the "confirm your email" message will explain what happened.
-    navigate("/login", { replace: true });
+    // Straight in when the account is already usable. Sending a brand-new user
+    // to the login screen to retype the password they just chose is the kind of
+    // friction that made signing up feel long. Only when email confirmation is
+    // switched on, and there is genuinely no session, do they go to /login --
+    // where the "confirm your email" message explains why.
+    navigate(signedIn ? "/home" : "/login", { replace: true });
   };
 
   return (

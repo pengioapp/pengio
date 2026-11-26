@@ -25,7 +25,14 @@ interface AuthUser {
   email: string;
 }
 
-export interface AuthResult {
+export /** Signing up may or may not establish a session, depending on whether
+ *  email confirmation is required. */
+interface SignUpResult {
+  error: string | null;
+  signedIn: boolean;
+}
+
+interface AuthResult {
   error: string | null;
 }
 
@@ -36,7 +43,7 @@ interface AuthContextType {
    *  a signed-in user to /login during the first render. */
   loading: boolean;
   signIn: (email: string, password: string) => Promise<AuthResult>;
-  signUp: (name: string, email: string, password: string, phone?: string) => Promise<AuthResult>;
+  signUp: (name: string, email: string, password: string, phone?: string) => Promise<SignUpResult>;
   requestPasswordReset: (email: string) => Promise<AuthResult>;
   setPassword: (password: string) => Promise<AuthResult>;
   logout: () => Promise<void>;
@@ -163,15 +170,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signUp = useCallback(
-    async (name: string, email: string, password: string, phone?: string): Promise<AuthResult> => {
-      const { error } = await supabase.auth.signUp({
+    async (name: string, email: string, password: string, phone?: string): Promise<SignUpResult> => {
+      const { data, error } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
         // Read by handle_new_user() to populate the profile, so it is never
         // created nameless or unfindable.
         options: { data: { full_name: name.trim(), phone: phone?.trim() || null } },
       });
-      return { error: error ? humanise(error.message) : null };
+      // With email confirmation off, Supabase returns a session right away and
+      // the account is usable immediately. With it on, there is no session and
+      // the user has to click a link first. The caller needs to know which.
+      return {
+        error: error ? humanise(error.message) : null,
+        signedIn: !!data.session,
+      };
     },
     []
   );
