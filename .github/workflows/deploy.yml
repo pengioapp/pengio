@@ -38,8 +38,10 @@ jobs:
 
       - run: npm run build
         env:
-          # Project sites live under /<repo>/, not the domain root.
-          VITE_BASE_PATH: /pengio/
+          # Served from the root of pengio.no, not a /<repo>/ subfolder. The
+          # router reads this back from BASE_URL, so links that leave the app
+          # and return -- password resets especially -- follow it on their own.
+          VITE_BASE_PATH: /
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
@@ -48,6 +50,11 @@ jobs:
       # 404 before React Router ever loaded. Serving the same document as the
       # 404 page hands those URLs to the client-side router instead.
       - run: cp dist/index.html dist/404.html
+
+      # Pages reads the custom domain from this file on every deploy. Without
+      # it the domain set in the repository settings is dropped the next time
+      # the workflow publishes, and the site quietly reverts to github.io.
+      - run: echo 'pengio.no' > dist/CNAME
 
       # Without this, Pages runs the output through Jekyll, which silently
       # drops files and folders beginning with an underscore.
